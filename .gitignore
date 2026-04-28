@@ -1,0 +1,31 @@
+.history/
+backend/nul
+
+# Dependências
+node_modules/
+
+# Build
+dist/
+build/
+bin/
+
+# Binários
+*.exe
+*.dll
+*.o
+*.a
+
+# Backend
+backend/build/
+backend/bin/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
