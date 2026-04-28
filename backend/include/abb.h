@@ -2,7 +2,7 @@
 #define ABB_H
 
 #include <iostream>
-#include "requisicao.h"
+#include "models/Requisicao.hpp"
 
 class ABB {
 public:

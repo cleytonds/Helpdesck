@@ -3,7 +3,7 @@
 // Compilar: g++ -std=c++17 -I. -Isrc -Iinclude -Istructures -I"C:\mysql-connector-c++-9.7.0-winx64\include\jdbc" test_mysql.cpp src/core/database/Database.cpp -L. -lmysqlcppconn -lws2_32 -o test_mysql.exe
 // ==========================================
 #include <iostream>
-#include "core/database/Database.hpp"
+#include "database/Database.hpp"
 #include "config/AppConfig.hpp"
 
 using namespace std;

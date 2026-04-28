@@ -8,7 +8,7 @@
 // ===========================================
 struct AppConfig {
     // MySQL
-    static constexpr const char* DB_HOST     = "tcp://127.0.0.1:3307";
+    static constexpr const char* DB_HOST = "tcp://127.0.0.1:3307";
     static constexpr const char* DB_USER     = "root";
     static constexpr const char* DB_PASSWORD = "";
     static constexpr const char* DB_SCHEMA   = "helpdesk";

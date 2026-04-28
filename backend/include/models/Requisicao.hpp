@@ -2,7 +2,7 @@
 #define REQUISICAO_HPP
 
 #include <string>
-
+#include "models/Requisicao.hpp"
 // ===========================================
 // Entidade de domínio: Requisicao (Ticket)
 // ===========================================

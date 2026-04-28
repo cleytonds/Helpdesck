@@ -1,7 +1,7 @@
 #ifndef LISTA_DUPLA_H
 #define LISTA_DUPLA_H
 
-#include "requisicao.h"
+#include "models/Requisicao.hpp"
 
 // ===============================
 // Lista de requisições

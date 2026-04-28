@@ -1,7 +1,7 @@
 #ifndef FILA_H
 #define FILA_H
 
-#include "requisicao.h"
+#include "models/Requisicao.hpp"
 
 class Fila {
 

@@ -2,7 +2,6 @@
 #define API_H
 
 #include <string>
-#include <cppconn/connection.h>
 #include "core/TicketManager.hpp"
 
 extern TicketManager manager;

@@ -1,7 +1,7 @@
 #ifndef ORDENACAO_H
 #define ORDENACAO_H
 
-#include "requisicao.h"
+#include "models/Requisicao.hpp"
 
 void ordenarPorPrioridade(Requisicao* arr[], int n);
 
