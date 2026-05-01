@@ -1,58 +1,99 @@
-// src/pages/Login.jsx
-
-import { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../services/api";
-import { AuthContext } from "../context/AuthContext";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import "./Auth.css";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useContext(AuthContext);
+  const { login } = useAuth();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleLogin(e) {
+  function handleChange(e) {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault();
+    setError("");
 
     try {
-      const response = await api.post("/login", {
-        email,
-        password
-      });
+      setLoading(true);
 
-      login(response.data);
+      const result = await login(
+        formData.email,
+        formData.password
+      );
+
+      if (!result.success) {
+        setError(result.message);
+        return;
+      }
 
       navigate("/dashboard");
+
     } catch (err) {
-      setError("Email ou senha inválidos");
+      setError("Erro ao realizar login.");
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
-    <div className="login-container">
-      <form onSubmit={handleLogin} className="login-form">
-        <h1>Helpdesk Login</h1>
+    <div className="auth-container">
+      <div className="auth-card">
 
-        {error && <p>{error}</p>}
+        <h1>Login HelpDesk</h1>
 
-        <input
-          type="email"
-          placeholder="Digite seu email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        {error && <div className="error-box">{error}</div>}
 
-        <input
-          type="password"
-          placeholder="Digite sua senha"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <form onSubmit={handleSubmit}>
 
-        <button type="submit">Entrar</button>
-      </form>
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleChange}
+          />
+
+          <input
+            type="password"
+            name="password"
+            placeholder="Senha"
+            value={formData.password}
+            onChange={handleChange}
+          />
+
+          <button disabled={loading}>
+            {loading ? "Entrando..." : "Entrar"}
+          </button>
+
+        </form>
+
+        {/* LINKS IGUAL SUA LOJA */}
+        <div className="auth-links">
+
+          <Link to="/register">
+            Criar conta
+          </Link>
+
+          <Link to="/forgot-password">
+            Esqueci minha senha
+          </Link>
+
+        </div>
+
+      </div>
     </div>
   );
 }
