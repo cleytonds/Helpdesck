@@ -1,5 +1,4 @@
-#include "../include/abb.h"
-#include "../include/requisicao.h"
+#include "abb.h"
 #include <iostream>
 
 using namespace std;
@@ -8,36 +7,44 @@ ABB::ABB() {
     raiz = nullptr;
 }
 
-// inserir por prioridade
-Requisicao* ABB::inserirRec(Requisicao* no, Requisicao* r) {
+// inserir
+ABBNode* ABB::inserirRec(ABBNode* no, Ticket t) {
 
-    if (!no) return r;
+    if (!no) {
+        ABBNode* novo = new ABBNode();
+        novo->data = t;
+        novo->left = nullptr;
+        novo->right = nullptr;
+        return novo;
+    }
 
-    if (r->prioridade < no->prioridade)
-        no->ant = inserirRec(no->ant, r);
+    if (t.priority < no->data.priority)
+        no->left = inserirRec(no->left, t);
     else
-        no->prox = inserirRec(no->prox, r);
+        no->right = inserirRec(no->right, t);
 
     return no;
 }
 
-void ABB::inserir(Requisicao* r) {
-    raiz = inserirRec(raiz, r);
+void ABB::inserir(Ticket t) {
+    raiz = inserirRec(raiz, t);
 }
 
-// ordem (prioridade)
-void ABB::inOrder(Requisicao* no) {
+// ordem
+void ABB::inOrderRec(ABBNode* no) {
 
     if (!no) return;
 
-    inOrder(no->ant);
+    inOrderRec(no->left);
 
-    cout << "Usuario: " << no->usuario << " prioridade: " << no->prioridade << endl;
+    cout << no->data.title
+         << " prioridade: "
+         << no->data.priority << endl;
 
-    inOrder(no->prox);
+    inOrderRec(no->right);
 }
 
 void ABB::listar() {
-    cout << "\n=== ARVORE DE PRIORIDADE ===\n";
-    inOrder(raiz);
+    cout << "\n=== ARVORE PRIORIDADE ===\n";
+    inOrderRec(raiz);
 }

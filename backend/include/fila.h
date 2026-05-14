@@ -1,19 +1,24 @@
 #ifndef FILA_H
 #define FILA_H
 
-#include "models/Requisicao.hpp"
+#include "models/Ticket.hpp"
+
+struct FilaNode {
+    Ticket data;
+    FilaNode* prox;
+};
 
 class Fila {
 
 private:
-    Requisicao* inicio;
-    Requisicao* fim;
+    FilaNode* inicio;
+    FilaNode* fim;
 
 public:
     Fila();
 
-    void enfileirar(Requisicao* r);
-    Requisicao* desenfileirar();
+    void enfileirar(Ticket t);
+    Ticket desenfileirar();
     void listar();
 };
 

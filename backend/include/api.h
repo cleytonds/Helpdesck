@@ -1,23 +1,22 @@
 #ifndef API_H
 #define API_H
 
+#pragma once
+
 #include <string>
-#include "core/TicketManager.hpp"
 
-extern TicketManager manager;
+// ======================================================
+// MYSQL C API
+// ======================================================
 
-// listar chamados
-std::string listarRequisicoes(sql::Connection* con);
+#include <mysql/mysql.h>
 
-// criar chamado
-void criarRequisicao(
-    sql::Connection* con,
-    std::string usuario,
-    std::string descricao,
-    int prioridade
-);
+// ======================================================
+// NOVA ARQUITETURA MVC
+// ======================================================
 
-// iniciar servidor HTTP
-void iniciarServidor();
+#include "repositories/TicketRepository.hpp"
+#include "services/TicketService.hpp"
+#include "controllers/TicketController.hpp"
 
 #endif

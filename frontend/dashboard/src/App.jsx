@@ -1,8 +1,4 @@
-// ======================================================
-// Rotas principais do sistema HelpDesk
-// ======================================================
-
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Navigate, BrowserRouter, Routes, Route } from "react-router-dom";
 
 // Context
 import { AuthProvider } from "./context/AuthContext";
@@ -12,12 +8,13 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Tickets from "./pages/Tickets";
+import AdminDashboard from "./pages/AdminDashboard";
 import AdminTickets from "./pages/AdminTickets";
 import VerifyEmail from "./pages/VerifyEmail";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 
-// Routes Protegidas
+// Routes protegidas
 import PrivateRoute from "./routes/PrivateRoute";
 import AdminRoute from "./routes/AdminRoute";
 
@@ -25,23 +22,26 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-
         <Routes>
 
-          {/* Público */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/verify-email/:token" element={<VerifyEmail />} />
-          {/* Público */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/verify-email/:token" element={<VerifyEmail />} />
+          {/* ===================== */}
+          {/* REDIRECT INICIAL */}
+          {/* ===================== */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
 
-          {/* RESET PASSWORD FLOW */}
+          {/* ===================== */}
+          {/* PUBLIC */}
+          {/* ===================== */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/verify-email/:token" element={<VerifyEmail />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/admin/tickets" element={<AdminTickets />} />
 
-          {/* Usuário logado */}
+          {/* ===================== */}
+          {/* USER (LOGADO) */}
+          {/* ===================== */}
           <Route
             path="/dashboard"
             element={
@@ -60,7 +60,21 @@ export default function App() {
             }
           />
 
-          {/* Admin */}
+          {/* ===================== */}
+          {/* ADMIN DASHBOARD */}
+          {/* ===================== */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            }
+          />
+
+          {/* ===================== */}
+          {/* ADMIN TICKETS */}
+          {/* ===================== */}
           <Route
             path="/admin/tickets"
             element={
@@ -70,8 +84,12 @@ export default function App() {
             }
           />
 
-        </Routes>
+          {/* ===================== */}
+          {/* FALLBACK */}
+          {/* ===================== */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
 
+        </Routes>
       </BrowserRouter>
     </AuthProvider>
   );

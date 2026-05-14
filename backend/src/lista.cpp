@@ -1,107 +1,66 @@
 #include "lista.h"
 #include <iostream>
-#include "../include/api.h"
-#include "../include/database.h"
 
 using namespace std;
 
-// ==========================
-// CONSTRUTOR
-// ==========================
-ListaDupla::ListaDupla() {
+Lista::Lista() {
     inicio = nullptr;
 }
 
-// ==========================
-// INSERIR NO FINAL
-// ==========================
-void ListaDupla::inserir(Requisicao* r) {
+// inserir
+void Lista::inserir(Ticket t) {
 
-    if (r == nullptr)
-        return;
+    ListaNode* novo = new ListaNode();
+    novo->data = t;
+    novo->prox = nullptr;
 
-    r->prox = nullptr;
-    r->ant = nullptr;
-
-    // lista vazia
-    if (inicio == nullptr) {
-        inicio = r;
+    if (!inicio) {
+        inicio = novo;
         return;
     }
 
-    // percorre até o final
-    Requisicao* aux = inicio;
+    ListaNode* aux = inicio;
 
-    while (aux->prox != nullptr) {
+    while (aux->prox)
         aux = aux->prox;
-    }
 
-    aux->prox = r;
-    r->ant = aux;
+    aux->prox = novo;
 }
 
-// ==========================
-// LISTAR REQUISIÇÕES
-// ==========================
-void ListaDupla::listar() {
+// listar
+std::vector<Ticket> Lista::listar() {
 
-    if (inicio == nullptr) {
-        cout << "\nLista vazia.\n";
-        return;
-    }
+    std::vector<Ticket> out;
 
-    Requisicao* aux = inicio;
+    ListaNode* aux = inicio;
 
-    cout << "\n=== LISTA DE REQUISICOES ===\n";
-
-    while (aux != nullptr) {
-
-        cout << "ID: " << aux->id << endl;
-        cout << "Usuario: " << aux->usuario << endl;
-        cout << "Descricao: " << aux->descricao << endl;
-        cout << "Prioridade: " << aux->prioridade << endl;
-        cout << "-----------------------------" << endl;
-
+    while (aux) {
+        out.push_back(aux->data);
         aux = aux->prox;
     }
+
+    return out;
 }
 
-// ==========================
-// REMOVER POR ID
-// ==========================
-void ListaDupla::remover(int id) {
+// remover
+void Lista::remover(int id) {
 
-    if (inicio == nullptr)
-        return;
+    if (!inicio) return;
 
-    Requisicao* aux = inicio;
+    ListaNode* aux = inicio;
+    ListaNode* ant = nullptr;
 
-    while (aux != nullptr && aux->id != id) {
+    while (aux && aux->data.id != id) {
+        ant = aux;
         aux = aux->prox;
     }
 
-    // não encontrou
-    if (aux == nullptr)
-        return;
+    if (!aux) return;
 
-    // remove do início
-    if (aux == inicio) {
+    if (!ant)
         inicio = aux->prox;
-
-        if (inicio != nullptr) {
-            inicio->ant = nullptr;
-        }
-    }
-    else {
-
-        if (aux->ant != nullptr) {
-            aux->ant->prox = aux->prox;
-        }
-
-        if (aux->prox != nullptr) {
-            aux->prox->ant = aux->ant;
-        }
-    }
+    else
+        ant->prox = aux->prox;
 
     delete aux;
 }

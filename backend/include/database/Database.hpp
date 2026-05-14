@@ -1,35 +1,23 @@
-#ifndef DATABASE_HPP
-#define DATABASE_HPP
+#pragma once
 
-#include <cppconn/connection.h>
+#include <memory>
 #include <mutex>
 
-struct ConnectionTestResult {
-    bool success;
-    std::string message;
-    int errorCode;
-};
+#include <mysql/mysql.h>
 
 class Database {
-private:
-    sql::Connection* connection_ = nullptr;
-    mutable std::mutex mutex_;
-
-    Database() = default;
-
 public:
-    ~Database();
-
     static Database& getInstance();
 
     bool connect();
     void disconnect();
 
-    sql::Connection* getConnection();
+    MYSQL* getConnection();
+    bool isConnected();
 
-    bool isConnected() const;
+private:
+    Database();
 
-    ConnectionTestResult testConnection();
+    MYSQL* conn = nullptr;
+    std::mutex mtx;
 };
-
-#endif

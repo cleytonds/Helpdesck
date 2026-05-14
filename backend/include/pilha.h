@@ -1,18 +1,23 @@
 #ifndef PILHA_H
 #define PILHA_H
 
-#include "models/Requisicao.hpp"
+#include "models/Ticket.hpp"
+
+struct PilhaNode {
+    Ticket data;
+    PilhaNode* prox;
+};
 
 class Pilha {
 
 private:
-    Requisicao* topo;
+    PilhaNode* topo;
 
 public:
     Pilha();
 
-    void push(Requisicao* r);
-    Requisicao* pop();
+    void push(Ticket t);
+    Ticket pop();
     void listar();
 };
 

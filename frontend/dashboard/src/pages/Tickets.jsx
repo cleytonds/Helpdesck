@@ -1,19 +1,16 @@
 import { useState } from "react";
 import api from "../services/api";
+import { useAuth } from "../context/AuthContext";
 import "./Tickets.css";
 
-// ======================================================
-// Página de abertura de chamados
-// ======================================================
-
 export default function Tickets() {
-  // ======================================================
-  // Estados
-  // ======================================================
+
+  const { user } = useAuth();
+
   const [ticket, setTicket] = useState({
     title: "",
     category: "",
-    priority: "Normal",
+    priority: "baixa",
     description: "",
   });
 
@@ -21,9 +18,6 @@ export default function Tickets() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  // ======================================================
-  // Atualiza campos
-  // ======================================================
   function handleChange(e) {
     setTicket({
       ...ticket,
@@ -31,9 +25,6 @@ export default function Tickets() {
     });
   }
 
-  // ======================================================
-  // Enviar chamado
-  // ======================================================
   async function handleSubmit(e) {
     e.preventDefault();
 
@@ -48,15 +39,15 @@ export default function Tickets() {
         category: ticket.category,
         priority: ticket.priority,
         description: ticket.description,
+        userId: user?.id, // 🔥 importante
       });
 
       setMessage("Chamado aberto com sucesso.");
 
-      // Limpa formulário
       setTicket({
         title: "",
         category: "",
-        priority: "Normal",
+        priority: "baixa",
         description: "",
       });
 
@@ -78,17 +69,8 @@ export default function Tickets() {
         <h1>Abrir Chamado</h1>
         <p>Descreva o problema para suporte</p>
 
-        {error && (
-          <div className="error-box">
-            {error}
-          </div>
-        )}
-
-        {message && (
-          <div className="success-box">
-            {message}
-          </div>
-        )}
+        {error && <div className="error-box">{error}</div>}
+        {message && <div className="success-box">{message}</div>}
 
         <form onSubmit={handleSubmit}>
 
@@ -102,74 +84,44 @@ export default function Tickets() {
               value={ticket.title}
               onChange={handleChange}
               required
+              autoComplete="off"
             />
           </div>
 
           {/* Categoria */}
           <div className="input-group">
             <label>Categoria</label>
-
             <select
               name="category"
               value={ticket.category}
               onChange={handleChange}
               required
             >
-              <option value="">
-                Selecione
-              </option>
-
-              <option value="Hardware">
-                Hardware
-              </option>
-
-              <option value="Software">
-                Software
-              </option>
-
-              <option value="Rede">
-                Rede
-              </option>
-
-              <option value="Acesso">
-                Acesso
-              </option>
-
+              <option value="">Selecione</option>
+              <option value="Hardware">Hardware</option>
+              <option value="Software">Software</option>
+              <option value="Rede">Rede</option>
+              <option value="Acesso">Acesso</option>
             </select>
           </div>
 
           {/* Prioridade */}
           <div className="input-group">
             <label>Prioridade</label>
-
             <select
               name="priority"
               value={ticket.priority}
               onChange={handleChange}
             >
-              <option value="Baixa">
-                Baixa
-              </option>
-
-              <option value="Normal">
-                Normal
-              </option>
-
-              <option value="Alta">
-                Alta
-              </option>
-
-              <option value="Crítica">
-                Crítica
-              </option>
-
+              <option value="baixa">Baixa</option>
+              <option value="media">Média</option>
+              <option value="alta">Alta</option>
             </select>
           </div>
 
           {/* Descrição */}
           <div className="input-group">
             <label>Descrição</label>
-
             <textarea
               name="description"
               rows="6"
@@ -180,14 +132,8 @@ export default function Tickets() {
             />
           </div>
 
-          {/* Botão */}
-          <button
-            type="submit"
-            disabled={loading}
-          >
-            {loading
-              ? "Enviando..."
-              : "Abrir Chamado"}
+          <button type="submit" disabled={loading}>
+            {loading ? "Enviando..." : "Abrir Chamado"}
           </button>
 
         </form>

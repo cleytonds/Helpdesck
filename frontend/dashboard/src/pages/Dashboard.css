@@ -1,0 +1,93 @@
+/* LAYOUT */
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+  background: #f4f6fb;
+  font-family: "Segoe UI", sans-serif;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 240px;
+  background: #1e293b;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px;
+}
+
+.logo h2 {
+  margin-bottom: 30px;
+}
+
+.menu a {
+  display: block;
+  color: #cbd5e1;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  text-decoration: none;
+  transition: 0.2s;
+}
+
+.menu a:hover {
+  background: #334155;
+  color: #fff;
+}
+
+/* LOGOUT */
+.logout-btn {
+  background: #ef4444;
+  border: none;
+  padding: 10px;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* CONTENT */
+.dashboard-content {
+  flex: 1;
+  padding: 30px;
+}
+
+/* WELCOME */
+.welcome-card {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+/* CARDS */
+.cards-grid {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 25px;
+}
+
+.card {
+  flex: 1;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+}
+
+.card span {
+  font-size: 28px;
+  font-weight: bold;
+}
+
+/* ACTIVITY */
+.recent-activity {
+  margin-top: 20px;
+}
+
+.activity-card {
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+}

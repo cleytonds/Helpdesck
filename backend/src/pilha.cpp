@@ -1,7 +1,5 @@
 #include "pilha.h"
 #include <iostream>
-#include "../include/api.h"
-#include "../include/database.h"
 
 using namespace std;
 
@@ -9,33 +7,43 @@ Pilha::Pilha() {
     topo = nullptr;
 }
 
-// empilhar
-void Pilha::push(Requisicao* r) {
+// push
+void Pilha::push(Ticket t) {
 
-    r->prox = topo;
-    topo = r;
+    PilhaNode* novo = new PilhaNode();
+    novo->data = t;
+    novo->prox = topo;
+
+    topo = novo;
 }
 
-// desempilhar
-Requisicao* Pilha::pop() {
+// pop
+Ticket Pilha::pop() {
 
-    if (!topo) return nullptr;
+    if (!topo) return Ticket();
 
-    Requisicao* r = topo;
+    PilhaNode* temp = topo;
+    Ticket t = temp->data;
+
     topo = topo->prox;
 
-    return r;
+    delete temp;
+
+    return t;
 }
 
 // listar
 void Pilha::listar() {
 
-    Requisicao* aux = topo;
+    PilhaNode* aux = topo;
 
-    cout << "\n=== REQUISICOES REABERTAS ===\n";
+    cout << "\n=== PILHA ===\n";
 
     while (aux) {
-        cout << aux->usuario << endl;
+        cout << aux->data.title
+             << " prioridade: "
+             << aux->data.priority << endl;
+
         aux = aux->prox;
     }
 }

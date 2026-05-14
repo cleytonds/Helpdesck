@@ -1,7 +1,5 @@
 #include "fila.h"
 #include <iostream>
-#include "../include/api.h"
-#include "../include/database.h"
 
 using namespace std;
 
@@ -10,42 +8,51 @@ Fila::Fila() {
 }
 
 // entra na fila
-void Fila::enfileirar(Requisicao* r) {
+void Fila::enfileirar(Ticket t) {
 
-    r->prox = nullptr;
+    FilaNode* novo = new FilaNode();
+    novo->data = t;
+    novo->prox = nullptr;
 
     if (!fim) {
-        inicio = fim = r;
+        inicio = fim = novo;
         return;
     }
 
-    fim->prox = r;
-    fim = r;
+    fim->prox = novo;
+    fim = novo;
 }
 
 // sai da fila
-Requisicao* Fila::desenfileirar() {
+Ticket Fila::desenfileirar() {
 
-    if (!inicio) return nullptr;
+    if (!inicio) return Ticket();
 
-    Requisicao* r = inicio;
+    FilaNode* temp = inicio;
+    Ticket t = temp->data;
+
     inicio = inicio->prox;
 
     if (!inicio)
         fim = nullptr;
 
-    return r;
+    delete temp;
+
+    return t;
 }
 
-// listar fila
+// listar
 void Fila::listar() {
 
-    Requisicao* aux = inicio;
+    FilaNode* aux = inicio;
 
-    cout << "\n=== FILA DE ATENDIMENTO ===\n";
+    cout << "\n=== FILA ===\n";
 
     while (aux) {
-        cout << aux->usuario << " - prioridade: " << aux->prioridade << endl;
+        cout << aux->data.title
+             << " prioridade: "
+             << aux->data.priority << endl;
+
         aux = aux->prox;
     }
 }

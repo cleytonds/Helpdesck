@@ -1,7 +1,11 @@
 import { useContext } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import "./Dashboard.css";
+import "../pages/Dashboard.css";
+
+// ======================================================
+// Dashboard Principal
+// Após login o usuário cai aqui
 
 // ======================================================
 // Dashboard Principal
@@ -80,17 +84,17 @@ export default function Dashboard() {
 
           <div className="card">
             <h3>Chamados Abertos</h3>
-            <span>12</span>
+            <span></span>
           </div>
 
           <div className="card">
             <h3>Em Atendimento</h3>
-            <span>5</span>
+            <span></span>
           </div>
 
           <div className="card">
             <h3>Finalizados</h3>
-            <span>24</span>
+            <span></span>
           </div>
 
         </div>

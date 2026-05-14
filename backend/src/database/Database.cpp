@@ -1,140 +1,96 @@
 #include "database/Database.hpp"
-#include "config/AppConfig.hpp"
 
 #include <iostream>
-#include <chrono>
-#include <memory>
 
-#include "mysql_driver.h"
-#include <cppconn/driver.h>
-#include <cppconn/statement.h>
-#include <cppconn/resultset.h>
-
-// ======================================================
-// DESTRUTOR
-// ======================================================
-Database::~Database() {
-    disconnect();
-}
-
-// ======================================================
-// SINGLETON
-// ======================================================
 Database& Database::getInstance() {
     static Database instance;
     return instance;
 }
 
-// ======================================================
-// CONECTAR
-// ======================================================
+Database::Database() {}
+
 bool Database::connect() {
-    std::lock_guard<std::mutex> lock(mutex_);
 
-    std::cout << "[DB] Conectando ao banco..." << std::endl;
+    std::cout << "[DB] ENTER CONNECT" << std::endl;
 
-    if (connection_ && !connection_->isClosed()) {
-        return true;
-    }
+    std::lock_guard<std::mutex> lock(mtx);
 
-    try {
-        sql::Driver* driver = get_driver_instance();
+    std::cout << "[DB] BEFORE MYSQL_INIT" << std::endl;
 
-        connection_ = driver->connect(
-            AppConfig::DB_HOST,
-            AppConfig::DB_USER,
-            AppConfig::DB_PASSWORD
-        );
+    conn = mysql_init(nullptr);
 
-        connection_->setSchema(AppConfig::DB_SCHEMA);
+    std::cout << "[DB] AFTER MYSQL_INIT" << std::endl;
 
-        std::cout << "[OK] Banco conectado!" << std::endl;
-        return true;
-
-    } catch (sql::SQLException& e) {
-        std::cerr << "[ERRO MYSQL] " << e.what() << std::endl;
-        connection_ = nullptr;
+    if (!conn) {
+        std::cerr << "[DB ERROR] mysql_init falhou" << std::endl;
         return false;
     }
-}
 
-// ======================================================
-// DESCONECTAR
-// ======================================================
-void Database::disconnect() {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::cout << "[DB] MYSQL INIT OK" << std::endl;
 
-    if (connection_) {
-        connection_->close();
-        delete connection_;
-        connection_ = nullptr;
+    // =========================
+    // MYSQL OPTIONS
+    // =========================
 
-        std::cout << "[OK] Banco desconectado." << std::endl;
-    }
-}
+    unsigned int timeout = 10;
+    mysql_options(conn, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);
 
-// ======================================================
-// PEGAR CONEXÃO
-// (SOMENTE REUTILIZAÇÃO - NÃO CRIA NOVA)
-// ======================================================
-sql::Connection* Database::getConnection() {
-    std::lock_guard<std::mutex> lock(mutex_);
-    return connection_;
-}
+    mysql_options(conn, MYSQL_SET_CHARSET_NAME, "utf8");
 
-// ======================================================
-// STATUS
-// ======================================================
-bool Database::isConnected() const {
-    std::lock_guard<std::mutex> lock(mutex_);
-    return connection_ && !connection_->isClosed();
-}
+    my_bool reconnect = 1;
+    mysql_options(conn, MYSQL_OPT_RECONNECT, &reconnect);
 
-// ======================================================
-// TESTE DE CONEXÃO
-// ======================================================
-ConnectionTestResult Database::testConnection() {
-    ConnectionTestResult result;
+    my_bool ssl = 0;
+    mysql_options(conn, MYSQL_OPT_SSL_ENFORCE, &ssl);
+    mysql_options(conn, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &ssl);
 
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::cout << "[DB] Tentando conectar..." << std::endl;
 
-    if (!connection_) {
-        result.success = false;
-        result.message = "Conexao nula";
-        result.errorCode = -1;
-        return result;
-    }
+    MYSQL* result = mysql_real_connect(
+        conn,
+        "127.0.0.1",
+        "root",
+        "root123",
+        "helpdesk",
+        3307,
+        nullptr,
+        CLIENT_MULTI_STATEMENTS | CLIENT_REMEMBER_OPTIONS
+    );
 
-    if (connection_->isClosed()) {
-        result.success = false;
-        result.message = "Conexao fechada";
-        result.errorCode = -2;
-        return result;
-    }
+    
+    if (!result) {
 
-    try {
-        auto start = std::chrono::steady_clock::now();
+        std::cerr << "[DB ERROR] mysql_real_connect falhou" << std::endl;
 
-        std::unique_ptr<sql::Statement> stmt(connection_->createStatement());
-        std::unique_ptr<sql::ResultSet> res(stmt->executeQuery("SELECT 1 AS ping"));
-
-        auto end = std::chrono::steady_clock::now();
-
-        if (res->next() && res->getInt("ping") == 1) {
-            result.success = true;
-            result.message = "SELECT 1 OK";
-            result.errorCode = 0;
-        } else {
-            result.success = false;
-            result.message = "Falha no ping";
-            result.errorCode = -3;
+        if (conn) {
+            std::cerr << "[MYSQL CODE] " << mysql_errno(conn) << std::endl;
+            std::cerr << "[MYSQL MSG] " << mysql_error(conn) << std::endl;
         }
 
-    } catch (sql::SQLException& e) {
-        result.success = false;
-        result.message = e.what();
-        result.errorCode = e.getErrorCode();
+        return false;
     }
 
-    return result;
+    conn = result;
+
+    std::cout << "[OK] Database conectado" << std::endl;
+
+    return true;
+}
+
+void Database::disconnect() {
+
+    std::lock_guard<std::mutex> lock(mtx);
+
+    if (conn) {
+        mysql_close(conn);
+        conn = nullptr;
+    }
+}
+
+MYSQL* Database::getConnection() {
+    return conn;
+}
+
+bool Database::isConnected() {
+    return conn != nullptr;
 }

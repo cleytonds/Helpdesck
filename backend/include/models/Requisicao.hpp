@@ -2,17 +2,17 @@
 #define REQUISICAO_HPP
 
 #include <string>
-#include "models/Requisicao.hpp"
+
 // ===========================================
 // Entidade de domínio: Requisicao (Ticket)
 // ===========================================
 struct Requisicao {
-    int         id;
+    int id;
     std::string usuario;
     std::string descricao;
-    int         prioridade;
+    int prioridade;
 
-    // Ponteiros para estruturas de dados encadeadas (lista dupla)
+    // Ponteiros para lista dupla
     Requisicao* prox;
     Requisicao* ant;
 
@@ -33,5 +33,4 @@ struct Requisicao {
         , ant(nullptr) {}
 };
 
-#endif // REQUISICAO_HPP
-
+#endif

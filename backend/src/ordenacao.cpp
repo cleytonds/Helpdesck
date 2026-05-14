@@ -1,6 +1,6 @@
 #include "ordenacao.h"
 #include "../include/api.h"
-#include "../include/database.h"
+#include "database/Database.hpp"
 
 // Bubble Sort simples (didático)
 void ordenarPorPrioridade(Requisicao* arr[], int n) {

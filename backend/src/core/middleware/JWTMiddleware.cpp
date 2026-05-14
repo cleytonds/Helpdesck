@@ -1,11 +1,12 @@
-#include "JWTMiddleware.h"
+#include "core/middleware/JWTMiddleware.hpp"
 
-bool JWTMiddleware::validateToken(const std::string& token)
+bool JWTMiddleware::authenticate(const httplib::Request& req, JWTPayload& payload)
 {
-    if(token.empty())
-    {
+    std::string token = JWTService::extractFromHeader(req);
+
+    if (token.empty()) {
         return false;
     }
 
-    return true;
+    return JWTService::validateToken(token, payload);
 }

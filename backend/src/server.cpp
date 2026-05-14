@@ -1,73 +1,110 @@
-// ==========================================
-// TESTE MÍNIMO ISOLADO - MySQL Connector C++
-// Compilar: g++ -std=c++17 -I. -Isrc -Iinclude -Istructures -I"C:\mysql-connector-c++-9.7.0-winx64\include\jdbc" test_mysql.cpp src/core/database/Database.cpp -L. -lmysqlcppconn -lws2_32 -o test_mysql.exe
-// ==========================================
+// ======================================================
+// server.cpp - HTTP Server
+// ======================================================
+
 #include <iostream>
-#include "database/Database.hpp"
-#include "config/AppConfig.hpp"
+#include "httplib.h"
+#include "json.hpp"
 
-using namespace std;
+// Controllers
+#include "controllers/AuthController.hpp"
+#include "controllers/TicketController.hpp"
 
-int main() {
-    cout << "========================================" << endl;
-    cout << "  TESTE ISOLADO - MySQL Connection" << endl;
-    cout << "========================================" << endl;
+using json = nlohmann::json;
 
-    cout << "[INFO] Host: " << AppConfig::DB_HOST << endl;
-    cout << "[INFO] User: " << AppConfig::DB_USER << endl;
-    cout << "[INFO] Schema: " << AppConfig::DB_SCHEMA << endl;
-    cout << endl;
+// ======================================================
+// ROUTES SETUP
+// ======================================================
+void setupRoutes(httplib::Server& server,
+                 AuthController& auth,
+                 TicketController& ticket)
+{
+    std::cout << "[ROUTES] setupRoutes carregado" << std::endl;
 
-    cout << "[1] Chamando Database::getInstance().connect()..." << endl;
-    bool ok = Database::getInstance().connect();
+    // ==================================================
+    // CORS
+    // ==================================================
+    server.set_pre_routing_handler([](const httplib::Request& req,
+                                      httplib::Response& res)
+    {
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        res.set_header("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
-    if (!ok) {
-        cerr << "[FALHA] connect() retornou FALSE" << endl;
-        return 1;
-    }
-
-    cout << "[OK] connect() retornou TRUE" << endl;
-
-    cout << "[2] Verificando isConnected()..." << endl;
-    if (!Database::getInstance().isConnected()) {
-        cerr << "[FALHA] isConnected() retornou FALSE!" << endl;
-        return 1;
-    }
-    cout << "[OK] isConnected() retornou TRUE" << endl;
-
-    cout << "[3] Testando getConnection()..." << endl;
-    sql::Connection* con = Database::getInstance().getConnection();
-    if (con == nullptr) {
-        cerr << "[FALHA] getConnection() retornou nullptr!" << endl;
-        return 1;
-    }
-    cout << "[OK] getConnection() retornou ponteiro valido" << endl;
-
-    cout << "[4] Executando SELECT 1..." << endl;
-    try {
-        sql::Statement* stmt = con->createStatement();
-        sql::ResultSet* res = stmt->executeQuery("SELECT 1 as ok, COUNT(*) as total FROM requisicoes");
-
-        if (res->next()) {
-            cout << "[OK] Query executada!" << endl;
-            cout << "      MySQL respondeu: " << res->getInt("ok") << endl;
-            cout << "      Total requisicoes: " << res->getInt("total") << endl;
-        } else {
-            cerr << "[FALHA] ResultSet vazio!" << endl;
+        if (req.method == "OPTIONS") {
+            res.status = 200;
+            return httplib::Server::HandlerResponse::Handled;
         }
 
-        delete res;
-        delete stmt;
+        return httplib::Server::HandlerResponse::Unhandled;
+    });
 
-    } catch (sql::SQLException& e) {
-        cerr << "[FALHA] SQLException: " << e.what() << endl;
-        return 1;
-    }
+    // ==================================================
+    // TEST
+    // ==================================================
+    server.Get("/", [](const auto&, auto& res) {
+        res.set_content("API ONLINE", "text/plain");
+    });
 
-    cout << endl;
-    cout << "[5] Desconectando..." << endl;
-    Database::getInstance().disconnect();
-    cout << "[OK] Teste concluido com sucesso!" << endl;
+    // ==================================================
+    // AUTH
+    // ==================================================
+    server.Post("/register", [&](const auto& req, auto& res) {
+        auth.registerUser(req, res);
+    });
 
-    return 0;
+    server.Post("/login", [&](const auto& req, auto& res) {
+        auth.login(req, res);
+    });
+
+    server.Post("/forgot-password", [&](const auto& req, auto& res) {
+        auth.forgotPassword(req, res);
+    });
+
+    server.Post("/reset-password", [&](const auto& req, auto& res) {
+        auth.resetPassword(req, res);
+    });
+
+    // ==================================================
+    // TICKETS (USER)
+    // ==================================================
+    server.Get("/tickets", [&](const auto& req, auto& res) {
+        ticket.getAllTickets(req, res);
+    });
+
+    server.Post("/tickets", [&](const auto& req, auto& res) {
+        ticket.createTicket(req, res);
+    });
+
+    server.Put(R"(/tickets/(\d+))", [&](const auto& req, auto& res) {
+        ticket.updateTicketStatus(req, res);
+    });
+
+    server.Delete(R"(/tickets/(\d+))", [&](const auto& req, auto& res) {
+        ticket.deleteTicket(req, res);
+    });
+
+    // ==================================================
+    // ADMIN ROUTES
+    // ==================================================
+    server.Get("/admin/tickets", [&](const auto& req, auto& res) {
+        ticket.getAllTickets(req, res);
+    });
+
+    server.Get("/admin/fila", [&](const auto& req, auto& res) {
+        ticket.getFila(req, res);
+    });
+
+    server.Get("/admin/historico", [&](const auto& req, auto& res) {
+        ticket.getHistorico(req, res);
+    });
+
+    server.Get("/admin/prioridades", [&](const auto& req, auto& res) {
+        ticket.getPrioridades(req, res);
+    });
+
+    server.Put(R"(/admin/tickets/(\d+))", [&](const auto& req, auto& res) {
+        ticket.updateTicketStatus(req, res);
+    });
 }
+

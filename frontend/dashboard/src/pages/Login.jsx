@@ -34,14 +34,25 @@ export default function Login() {
         formData.password
       );
 
+      // ❌ login falhou
       if (!result.success) {
         setError(result.message);
         return;
       }
 
-      navigate("/dashboard");
+      console.log("LOGIN RESULT:", result);
 
+      const role = result.user?.role;
+      console.log (role);
+
+      // 🔥 REDIRECIONAMENTO CORRETO
+      if (role === "admin") {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err) {
+      console.error(err);
       setError("Erro ao realizar login.");
     } finally {
       setLoading(false);
@@ -54,7 +65,11 @@ export default function Login() {
 
         <h1>Login HelpDesk</h1>
 
-        {error && <div className="error-box">{error}</div>}
+        {error && (
+          <div className="error-box">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
 
@@ -64,6 +79,7 @@ export default function Login() {
             placeholder="Email"
             value={formData.email}
             onChange={handleChange}
+            required
           />
 
           <input
@@ -72,6 +88,7 @@ export default function Login() {
             placeholder="Senha"
             value={formData.password}
             onChange={handleChange}
+            required
           />
 
           <button disabled={loading}>
@@ -80,7 +97,6 @@ export default function Login() {
 
         </form>
 
-        {/* LINKS IGUAL SUA LOJA */}
         <div className="auth-links">
 
           <Link to="/register">

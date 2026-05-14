@@ -1,21 +1,28 @@
-# =====================================================
-# COMPILADOR
-# =====================================================
+# ======================================================
+# MAKEFILE - HELPDESK C++ REST API
+# ======================================================
+
 CXX = g++
 
 # =====================================================
-# DIRETÓRIOS PADRÃO (nível empresa)
+# DIRETÓRIOS
 # =====================================================
 SRC_DIR   = src
 INC_DIR   = include
-BUILD_DIR = build
 BIN_DIR   = bin
 OBJ_DIR   = obj
 DIST_DIR  = dist
-TEST_DIR  = tests
 
-TARGET    = $(BIN_DIR)/servidor.exe
-TEST_BIN  = $(BIN_DIR)/tests.exe
+CONTROLLERS_DIR = src/controllers
+CORE_DIR        = src/core
+UTILS_DIR       = src/utils
+SERVICES_DIR    = src/services
+REPOSITORIES_DIR = src/repositories
+DATABASE_DIR    = src/database
+HANDLERS_DIR    = src/handlers
+ROUTES_DIR      = src/routes
+
+TARGET = $(BIN_DIR)/servidor.exe
 
 # =====================================================
 # MODO DE BUILD
@@ -29,23 +36,59 @@ CXXFLAGS = -std=c++17 -O2 -I$(INC_DIR) -MMD -MP
 endif
 
 # =====================================================
-# MYSQL (mantido do seu projeto)
+# MYSQL / MARIADB
 # =====================================================
-MYSQL_INCLUDE = -I"/c/mysql-connector-c++-9.7.0-winx64/mysql-connector-c++-9.7.0-winx64/include/jdbc"
-MYSQL_LIB     = -L"/c/mysql-connector-c++-9.7.0-winx64/mysql-connector-c++-9.7.0-winx64/lib64/vs14"
-MYSQL_LINK    = -lmysqlcppconn
-LIBS          = -lws2_32
+MYSQL_INCLUDE = -I/mingw64/include/mariadb
+MYSQL_LIB     = -L/mingw64/lib
+MYSQL_LINK    = -lmariadb
 
 # =====================================================
-# SOURCES
+# LIBS
+# =====================================================
+LIBS = -lws2_32 -lssl -lcrypto -lz
+
+# =====================================================
+# FONTES
 # =====================================================
 SRCS := $(wildcard $(SRC_DIR)/*.cpp)
-OBJS := $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
-DEPS := $(OBJS:.o=.d)
 
-# TESTES (opcional)
-TEST_SRCS := $(wildcard $(TEST_DIR)/*.cpp)
-TEST_OBJS := $(TEST_SRCS:$(TEST_DIR)/%.cpp=$(OBJ_DIR)/tests_%.o)
+CONTROLLER_SRCS  := $(wildcard $(CONTROLLERS_DIR)/*.cpp)
+CORE_SRCS        := $(wildcard $(CORE_DIR)/server/*.cpp) \
+                    $(wildcard $(CORE_DIR)/middleware/*.cpp)
+
+UTILS_SRCS       := $(wildcard $(UTILS_DIR)/*.cpp)
+SERVICES_SRCS    := $(wildcard $(SERVICES_DIR)/*.cpp)
+REPOSITORY_SRCS  := $(wildcard $(REPOSITORIES_DIR)/*.cpp)
+DATABASE_SRCS    := $(wildcard $(DATABASE_DIR)/*.cpp)
+HANDLER_SRCS     := $(wildcard $(HANDLERS_DIR)/*.cpp)
+ROUTES_SRCS      := $(wildcard $(ROUTES_DIR)/*.cpp)
+
+ALL_SRCS := $(SRCS) \
+            $(CONTROLLER_SRCS) \
+            $(CORE_SRCS) \
+            $(UTILS_SRCS) \
+            $(SERVICES_SRCS) \
+            $(REPOSITORY_SRCS) \
+            $(DATABASE_SRCS) \
+            $(HANDLER_SRCS) \
+            $(ROUTES_SRCS)
+
+# =====================================================
+# OBJETOS
+# =====================================================
+OBJS := $(ALL_SRCS:%.cpp=$(OBJ_DIR)/%.o)
+OBJS := $(OBJS:$(SRC_DIR)/%=$(OBJ_DIR)/%)
+OBJS := $(OBJS:$(CONTROLLERS_DIR)/%=$(OBJ_DIR)/controllers/%)
+OBJS := $(OBJS:$(CORE_DIR)/server/%=$(OBJ_DIR)/core/server/%)
+OBJS := $(OBJS:$(CORE_DIR)/middleware/%=$(OBJ_DIR)/core/middleware/%)
+OBJS := $(OBJS:$(UTILS_DIR)/%=$(OBJ_DIR)/utils/%)
+OBJS := $(OBJS:$(SERVICES_DIR)/%=$(OBJ_DIR)/services/%)
+OBJS := $(OBJS:$(REPOSITORIES_DIR)/%=$(OBJ_DIR)/repositories/%)
+OBJS := $(OBJS:$(DATABASE_DIR)/%=$(OBJ_DIR)/database/%)
+OBJS := $(OBJS:$(HANDLERS_DIR)/%=$(OBJ_DIR)/handlers/%)
+OBJS := $(OBJS:$(ROUTES_DIR)/%=$(OBJ_DIR)/routes/%)
+
+DEPS := $(OBJS:.o=.d)
 
 # =====================================================
 # CORES
@@ -66,80 +109,93 @@ all: banner prepare $(TARGET)
 prepare:
 	@mkdir -p $(BIN_DIR)
 	@mkdir -p $(OBJ_DIR)
+	@mkdir -p $(OBJ_DIR)/controllers
+	@mkdir -p $(OBJ_DIR)/core/server
+	@mkdir -p $(OBJ_DIR)/core/middleware
+	@mkdir -p $(OBJ_DIR)/utils
+	@mkdir -p $(OBJ_DIR)/services
+	@mkdir -p $(OBJ_DIR)/repositories
+	@mkdir -p $(OBJ_DIR)/database
+	@mkdir -p $(OBJ_DIR)/handlers
+	@mkdir -p $(OBJ_DIR)/routes
 	@mkdir -p $(DIST_DIR)
 
 # =====================================================
-# LINK PRINCIPAL
+# LINK FINAL
 # =====================================================
 $(TARGET): $(OBJS)
-	@echo "$(BLUE)[LINK APP]$(NC)"
+	@echo "$(BLUE)[LINK]$(NC)"
 	$(CXX) $^ -o $@ $(MYSQL_LIB) $(MYSQL_LINK) $(LIBS)
-	@echo "$(GREEN)[OK] App gerado -> $(TARGET)$(NC)"
+	@echo "$(GREEN)[OK] Servidor gerado -> $(TARGET)$(NC)"
 
 # =====================================================
-# COMPILAÇÃO APP
+# COMPILAÇÃO
 # =====================================================
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	@mkdir -p $(OBJ_DIR)
+$(OBJ_DIR)/%.o: %.cpp
+	@mkdir -p $(dir $@)
+	@echo "$(BLUE)[COMP]$(NC) $<"
+	$(CXX) $(CXXFLAGS) $(MYSQL_INCLUDE) -c $< -o $@
+
+$(OBJ_DIR)/controllers/%.o: $(CONTROLLERS_DIR)/%.cpp
+	@mkdir -p $(OBJ_DIR)/controllers
+	@echo "$(BLUE)[COMP]$(NC) $<"
+	$(CXX) $(CXXFLAGS) $(MYSQL_INCLUDE) -c $< -o $@
+
+$(OBJ_DIR)/core/server/%.o: $(CORE_DIR)/server/%.cpp
+	@mkdir -p $(OBJ_DIR)/core/server
+	@echo "$(BLUE)[COMP]$(NC) $<"
+	$(CXX) $(CXXFLAGS) $(MYSQL_INCLUDE) -c $< -o $@
+
+$(OBJ_DIR)/core/middleware/%.o: $(CORE_DIR)/middleware/%.cpp
+	@mkdir -p $(OBJ_DIR)/core/middleware
+	@echo "$(BLUE)[COMP]$(NC) $<"
+	$(CXX) $(CXXFLAGS) $(MYSQL_INCLUDE) -c $< -o $@
+
+$(OBJ_DIR)/utils/%.o: $(UTILS_DIR)/%.cpp
+	@mkdir -p $(OBJ_DIR)/utils
+	@echo "$(BLUE)[COMP]$(NC) $<"
+	$(CXX) $(CXXFLAGS) $(MYSQL_INCLUDE) -c $< -o $@
+
+$(OBJ_DIR)/services/%.o: $(SERVICES_DIR)/%.cpp
+	@mkdir -p $(OBJ_DIR)/services
+	@echo "$(BLUE)[COMP]$(NC) $<"
+	$(CXX) $(CXXFLAGS) $(MYSQL_INCLUDE) -c $< -o $@
+
+$(OBJ_DIR)/repositories/%.o: $(REPOSITORIES_DIR)/%.cpp
+	@mkdir -p $(OBJ_DIR)/repositories
+	@echo "$(BLUE)[COMP]$(NC) $<"
+	$(CXX) $(CXXFLAGS) $(MYSQL_INCLUDE) -c $< -o $@
+
+$(OBJ_DIR)/database/%.o: $(DATABASE_DIR)/%.cpp
+	@mkdir -p $(OBJ_DIR)/database
+	@echo "$(BLUE)[COMP]$(NC) $<"
+	$(CXX) $(CXXFLAGS) $(MYSQL_INCLUDE) -c $< -o $@
+
+$(OBJ_DIR)/handlers/%.o: $(HANDLERS_DIR)/%.cpp
+	@mkdir -p $(OBJ_DIR)/handlers
+	@echo "$(BLUE)[COMP]$(NC) $<"
+	$(CXX) $(CXXFLAGS) $(MYSQL_INCLUDE) -c $< -o $@
+
+$(OBJ_DIR)/routes/%.o: $(ROUTES_DIR)/%.cpp
+	@mkdir -p $(OBJ_DIR)/routes
 	@echo "$(BLUE)[COMP]$(NC) $<"
 	$(CXX) $(CXXFLAGS) $(MYSQL_INCLUDE) -c $< -o $@
 
 # =====================================================
-# TESTES
-# =====================================================
-tests: prepare $(TEST_BIN)
-	@echo "$(GREEN)[OK] Testes prontos$(NC)"
-
-$(TEST_BIN): $(TEST_OBJS) $(OBJS)
-	@echo "$(BLUE)[LINK TESTS]$(NC)"
-	$(CXX) $^ -o $@ \
-	$(MYSQL_LIB) $(MYSQL_LINK) $(LIBS)
-
-$(OBJ_DIR)/tests_%.o: $(TEST_DIR)/%.cpp
-	@mkdir -p $(OBJ_DIR)
-	@echo "$(BLUE)[TEST COMP]$(NC) $<"
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-# =====================================================
-# EXECUTAR APP
+# RUN
 # =====================================================
 run: all
 	./$(TARGET)
 
 # =====================================================
-# EXECUTAR TESTES
-# =====================================================
-run-tests: tests
-	./$(TEST_BIN)
-
-# =====================================================
 # CLEAN
 # =====================================================
 clean:
-	@echo "$(RED)[CLEAN] removendo builds...$(NC)"
-	@rm -rf $(BUILD_DIR) $(BIN_DIR) $(OBJ_DIR) $(DIST_DIR)
+	@echo "$(RED)[CLEAN]$(NC)"
+	@rm -rf $(BIN_DIR) $(OBJ_DIR) $(DIST_DIR)
 
 # =====================================================
-# RELEASE PACKAGE (deploy local)
-# =====================================================
-dist: all
-	@echo "$(BLUE)[DIST] criando pacote...$(NC)"
-	@mkdir -p $(DIST_DIR)
-	@cp $(TARGET) $(DIST_DIR)/
-	@cp -r $(INC_DIR) $(DIST_DIR)/
-	@echo "$(GREEN)[OK] pacote criado em $(DIST_DIR)$(NC)"
-
-# =====================================================
-# DEPLOY SIMULADO (produção local)
-# =====================================================
-deploy: dist
-	@echo "$(BLUE)[DEPLOY] enviando para produção (simulado)...$(NC)"
-	@mkdir -p deploy
-	@cp -r $(DIST_DIR)/* deploy/
-	@echo "$(GREEN)[OK] Deploy concluído (simulado)$(NC)"
-
-# =====================================================
-# DEPENDÊNCIAS AUTOMÁTICAS
+# DEPENDÊNCIAS
 # =====================================================
 -include $(DEPS)
 
@@ -148,6 +204,7 @@ deploy: dist
 # =====================================================
 banner:
 	@echo "$(GREEN)======================================$(NC)"
-	@echo "$(GREEN)   HELP DESK BACKEND (C++ SERVER)     $(NC)"
-	@echo "$(GREEN)   MODE: $(MODE)                       $(NC)"
+	@echo "$(GREEN)   HELP DESK C++ REST API           $(NC)"
+	@echo "$(GREEN)   MVC + Services Architecture      $(NC)"
+	@echo "$(GREEN)   Mode: $(MODE)                   $(NC)"
 	@echo "$(GREEN)======================================$(NC)"

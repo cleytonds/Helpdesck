@@ -1,22 +1,25 @@
 #ifndef LISTA_DUPLA_H
 #define LISTA_DUPLA_H
 
-#include "models/Requisicao.hpp"
+#include "models/Ticket.hpp"
+#include <vector>
 
-// ===============================
-// Lista de requisições
-// ===============================
-class ListaDupla {
+struct ListaNode {
+    Ticket data;
+    ListaNode* prox;
+};
+
+class Lista {
 
 private:
-    Requisicao* inicio;
+    ListaNode* inicio;
 
 public:
-    ListaDupla();
+    Lista();
 
-    void inserir(Requisicao* r);
+    void inserir(Ticket t);
     void remover(int id);
-    void listar();
+    std::vector<Ticket> listar();
 };
 
 #endif
