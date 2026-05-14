@@ -102,3 +102,16 @@ bool TicketRepository::remove(int id) {
 
     return true;
 }
+
+std::optional<Ticket> TicketRepository::findById(int id) {
+
+    auto tickets = findAll();
+
+    for (const auto& t : tickets) {
+        if (t.id == id) {
+            return t;
+        }
+    }
+
+    return std::nullopt;
+}

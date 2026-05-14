@@ -1,11 +1,14 @@
 #pragma once
 
-#include "repositories/UserRepository.hpp"
+#include <string>
+#include <mariadb/mysql.h>
+
 #include "dto/LoginRequest.hpp"
 #include "dto/RegisterRequest.hpp"
 
-#include <string>
-#include <mariadb/mysql.h>
+// forward declaration para evitar includes circulares
+class UserRepository;
+
 
 // ======================================================
 // RESULTADO

@@ -102,3 +102,26 @@ void AuthController::forgotPassword(const httplib::Request& req, httplib::Respon
 }
 
 // ======================================================
+void AuthController::resetPassword(
+    const httplib::Request& req,
+    httplib::Response& res) {
+
+    auto token = req.get_param_value("token");
+    auto password = req.get_param_value("password");
+
+    auto result = authService_.resetPassword(token, password);
+
+    if (result.success) {
+        res.status = 200;
+        res.set_content(
+            R"({"success":true,"message":"Senha alterada"})",
+            "application/json"
+        );
+    } else {
+        res.status = 400;
+        res.set_content(
+            R"({"success":false,"message":"Erro ao alterar senha"})",
+            "application/json"
+        );
+    }
+}

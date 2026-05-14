@@ -1,0 +1,47 @@
+import { useEffect, useState, useContext } from "react";
+import api from "../services/api";
+import { AuthContext } from "../context/AuthContext";
+import "./Dashboard.css";
+
+export default function MyTickets() {
+  const { user } = useContext(AuthContext);
+  const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  async function loadMyTickets() {
+    try {
+      const res = await api.get(`/tickets/my?user_id=${user.id}`);
+      setTickets(res.data?.tickets ?? []);
+    } catch (err) {
+      console.error("Erro ao buscar chamados:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (user?.id) {
+      loadMyTickets();
+    }
+  }, [user]);
+
+  if (loading) return <h2>Carregando...</h2>;
+
+  return (
+    <div className="dashboard-container">
+
+      <h1>Meus Chamados</h1>
+
+      <div className="cards-grid">
+        {(tickets ?? []).map((t) => (
+          <div key={t.id} className="card">
+            <h3>{t.title}</h3>
+            <p>{t.description}</p>
+            <span>Status: {t.status}</span>
+          </div>
+        ))}
+      </div>
+
+    </div>
+  );
+}

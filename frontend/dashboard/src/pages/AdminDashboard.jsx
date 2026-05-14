@@ -1,196 +1,176 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
-import "../pages/AdminDashboard.css";
-import { Link, useNavigate } from "react-router-dom";
+import "./AdminDashboard.css";
+import { useNavigate } from "react-router-dom";
 
-export default function AdminTickets() {
-  // ======================================================
-  // ESTADOS
-  // ======================================================
+export default function AdminDashboard() {
   const [tickets, setTickets] = useState([]);
   const [fila, setFila] = useState([]);
   const [historico, setHistorico] = useState([]);
   const [prioridades, setPrioridades] = useState([]);
-
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const navigate = useNavigate();
 
-  // ======================================================
-  // LOAD GERAL
-  // ======================================================
+  // ==============================
+  // LOAD CENTRALIZADO
+  // ==============================
   async function loadAll() {
+    setLoading(true);
+    setError(null);
+
     try {
       const [t, f, h, p] = await Promise.all([
-        api.get("/admin/tickets"),
+        api.get("/tickets"),
         api.get("/admin/fila"),
         api.get("/admin/historico"),
         api.get("/admin/prioridades"),
       ]);
 
-      setTickets(t.data.tickets);
-      setFila(f.data.tickets);
-      setHistorico(h.data.tickets);
-      setPrioridades(p.data.tickets);
-
-    } catch (error) {
-      console.error("Erro admin:", error);
+      setTickets(t.data?.tickets ?? []);
+      setFila(f.data?.tickets ?? []);
+      setHistorico(h.data?.tickets ?? []);
+      setPrioridades(p.data?.tickets ?? []);
+    } catch (err) {
+      console.error(err);
+      setError("Erro ao carregar dados do painel");
     } finally {
       setLoading(false);
     }
   }
 
-  // ======================================================
-  // UPDATE STATUS
-  // ======================================================
+  // ==============================
+  // UPDATE TICKET
+  // ==============================
   async function updateTicket(id, status, level) {
     try {
-      await api.put(`/admin/tickets/${id}`, {
+      await api.put(`/tickets/${id}`, {
         status,
         level,
       });
 
       loadAll();
-
-    } catch (error) {
-      console.error("Erro atualizar chamado:", error);
+    } catch (err) {
+      console.error(err);
+      setError("Erro ao atualizar ticket");
     }
   }
 
-  // ======================================================
-  // INIT
-  // ======================================================
   useEffect(() => {
     loadAll();
   }, []);
 
-  // ======================================================
-  // RENDER
-  // ======================================================
+  // ==============================
+  // STATES UI
+  // ==============================
   if (loading) {
     return <div className="loading">Carregando painel...</div>;
+  }
+
+  if (error) {
+    return <div className="error">{error}</div>;
   }
 
   return (
     <div className="admin-container">
 
+      {/* HEADER */}
       <div className="admin-title">
-        <h1>Painel Inteligente</h1>
-        <p>Central de controle administrativo</p>
+        <h1>Admin Dashboard</h1>
+        <p>Central de controle do sistema</p>
       </div>
 
+      {/* ACTIONS */}
       <div className="admin-actions">
-
-        <button
-          onClick={() => navigate("/admin/tickets")}
-          className="btn-admin-tickets"
-        >
+        <button onClick={() => navigate("/admin/tickets")}>
           📋 Tickets
         </button>
 
-        <button
-          className="logout-btn"
-          onClick={() => navigate("/login")}
-        >
+        <button onClick={() => navigate("/login")}>
           🚪 Sair
         </button>
-
       </div>
 
-      
-
-      {/* TICKETS */}
+      {/* ===================== TICKETS ===================== */}
       <section>
         <h2>Todos os Chamados</h2>
 
         <div className="tickets-grid">
-          {tickets.map((ticket) => (
-            <div key={ticket.id} className="ticket-admin-card">
+          {(tickets ?? []).map((ticket) => (
+            <div key={ticket.id} className="ticket-card">
 
-              {/* HEADER */}
-              <div className="ticket-top">
-                <h3>{ticket.title}</h3>
+              <h3>{ticket.title}</h3>
 
-                <span className="ticket-status">
-                  {ticket.status}
-                </span>
-              </div>
-
-              {/* INFO */}
               <p><strong>Usuário:</strong> {ticket.user_name}</p>
               <p><strong>Email:</strong> {ticket.user_email}</p>
-              <p><strong>Categoria:</strong> {ticket.category}</p>
-              <p><strong>Prioridade:</strong> {ticket.priority}</p>
+              <p><strong>Status:</strong> {ticket.status}</p>
 
-              <div className="description-box">
+              <div className="description">
                 {ticket.description}
               </div>
 
-              {/* CONTROLES */}
-              <div className="admin-controls">
+              <select
+                value={ticket.status}
+                onChange={(e) =>
+                  updateTicket(ticket.id, e.target.value, ticket.level)
+                }
+              >
+                <option value="aberto">Aberto</option>
+                <option value="andamento">Em andamento</option>
+                <option value="resolvido">Resolvido</option>
+              </select>
 
-                {/* STATUS */}
-                <select
-                  value={ticket.status}
-                  onChange={(e) =>
-                    updateTicket(ticket.id, e.target.value, ticket.priority)
-                  }
-                >
-                  <option value="aberto">Aberto</option>
-                  <option value="andamento">Em andamento</option>
-                  <option value="resolvido">Resolvido</option>
-                </select>
-
-                {/* PRIORIDADE */}
-                <select
-                  value={ticket.priority}
-                  onChange={(e) =>
-                    updateTicket(ticket.id, ticket.status, e.target.value)
-                  }
-                >
-                  <option value="baixa">Baixa</option>
-                  <option value="media">Média</option>
-                  <option value="alta">Alta</option>
-                </select>
-
-              </div>
+              <select
+                value={ticket.level || "N1"}
+                onChange={(e) =>
+                  updateTicket(ticket.id, ticket.status, e.target.value)
+                }
+              >
+                <option value="N1">N1</option>
+                <option value="N2">N2</option>
+                <option value="N3">N3</option>
+              </select>
 
             </div>
           ))}
         </div>
       </section>
 
-      {/* FILA */}
+      {/* ===================== FILA ===================== */}
       <section>
         <h2>Fila de Atendimento</h2>
+
         <div className="simple-grid">
-          {fila.map((t, index) => (
-            <div key={index} className="mini-card">
-              {t.titulo} - {t.prioridade}
+          {(fila ?? []).map((t) => (
+            <div key={t.id} className="mini-card">
+              {t.title} - {t.priority}
             </div>
           ))}
         </div>
       </section>
 
-      {/* PRIORIDADES */}
+      {/* ===================== PRIORIDADES ===================== */}
       <section>
-        <h2>Ordenado por Prioridade</h2>
+        <h2>Prioridades</h2>
+
         <div className="simple-grid">
-          {prioridades.map((t, index) => (
-            <div key={index} className="mini-card">
-              {t.titulo} - {t.prioridade}
+          {(prioridades ?? []).map((t) => (
+            <div key={t.id} className="mini-card">
+              {t.title} - {t.priority}
             </div>
           ))}
         </div>
       </section>
 
-      {/* HISTÓRICO */}
+      {/* ===================== HISTÓRICO ===================== */}
       <section>
-        <h2>Histórico de Atendimentos</h2>
+        <h2>Histórico</h2>
+
         <div className="simple-grid">
-          {historico.map((t, index) => (
-            <div key={index} className="mini-card">
-              {t.titulo} - {t.status}
+          {(historico ?? []).map((t) => (
+            <div key={t.id} className="mini-card">
+              {t.title} - {t.status}
             </div>
           ))}
         </div>

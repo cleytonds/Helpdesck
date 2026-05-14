@@ -14,8 +14,9 @@ private:
     NodeABB* inserir(NodeABB* node, Ticket t) {
         if (!node) return new NodeABB{t, nullptr, nullptr};
 
-        if (t.prioridade < node->ticket.prioridade)
+        if (t.priority < node->ticket.priority)
             node->left = inserir(node->left, t);
+
         else
             node->right = inserir(node->right, t);
 

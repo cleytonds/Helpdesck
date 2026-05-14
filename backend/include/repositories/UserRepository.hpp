@@ -1,37 +1,19 @@
 #pragma once
 
 #include <mysql/mysql.h>
-#include <string>
+
 #include <optional>
-#include <vector>
-#include "services/AuthService.hpp"
+#include <string>
 
-// ======================================================
-// MODEL USER
-// Representa entidade de usuário no sistema
-// ======================================================
-struct User {
-    int id;
-    std::string name;
-    std::string email;
-    std::string password; // armazena password_hash
-    std::string role;
-    bool active;
-};
+#include "models/User.hpp"
 
-// ======================================================
-// USER REPOSITORY
-// Responsável pelo acesso ao banco de dados (users)
-// ======================================================
 class UserRepository {
 private:
-    MYSQL* conn;
+    MYSQL* conn_;
 
 public:
-    // ==================================================
-    // CONSTRUCTOR
-    // ==================================================
-    explicit UserRepository(MYSQL* c);
+    explicit UserRepository(MYSQL* conn);
+
 
     // ==================================================
     // BUSCA

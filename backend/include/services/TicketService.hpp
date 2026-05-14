@@ -4,10 +4,10 @@
 #include "repositories/TicketRepository.hpp"
 #include "dto/TicketRequest.hpp"
 
-#include "fila.h"
-#include "pilha.h"
-#include "abb.h"
-#include "lista.h"
+#include "structures/fila.hpp"
+#include "structures/pilha.hpp"
+#include "structures/abb.hpp"
+#include "structures/lista_dupla.hpp"
 
 #include <vector>
 #include <optional>
@@ -17,7 +17,6 @@
 // SERVICE (MOTOR DO HELP DESK)
 // ======================================================
 class TicketService {
-
 public:
     explicit TicketService(TicketRepository& ticketRepo);
 
@@ -47,14 +46,10 @@ private:
     // =========================
     // ESTRUTURAS DO MOTOR
     // =========================
-    // Observação importante:
-    // - Fila/Pilha/ABB/Lista NÃO possuem API de iteração para retorno.
-    // - Portanto, o serviço usa o DB (repository) como fonte de verdade.
-    // - As estruturas são usadas como motor/estado em memória.
-    Fila filaAtendimento;
-    Pilha pilhaReabertura;
+    FilaTickets filaAtendimento;
+    PilhaTickets pilhaReabertura;
     ABB arvorePrioridade;
-    Lista historico;
+    ListaDupla historico;
 };
 
 #endif

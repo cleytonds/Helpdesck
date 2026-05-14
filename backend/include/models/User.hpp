@@ -1,11 +1,12 @@
 #pragma once
+
 #include <string>
 
-struct Ticket {
+struct User {
     int id;
-    std::string titulo;
-    std::string descricao;
-    std::string usuario;
-    std::string prioridade; // baixa, media, alta
-    std::string status;
+    std::string name;
+    std::string email;
+    std::string password;
+    bool active;
+    std::string role;
 };

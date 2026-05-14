@@ -28,7 +28,13 @@ std::optional<Ticket> TicketService::getTicketById(int id) const {
 bool TicketService::createTicket(const TicketRequest& req, int userId) {
     if (!req.isValid()) return false;
 
-    int id = ticketRepo_.create(req.title, req.description, req.priority, userId);
+    int id = ticketRepo_.create(
+        req.title,
+        req.description,
+        req.priority,
+        userId
+    );
+
     if (id <= 0) return false;
 
     Ticket t;
@@ -39,10 +45,13 @@ bool TicketService::createTicket(const TicketRequest& req, int userId) {
     t.status = "aberto";
     t.userId = userId;
 
-    // Motor em memória (sincronizado com a criação)
-    filaAtendimento.enfileirar(t);
+    // =========================================
+    // Estruturas em memória
+    // =========================================
+    filaAtendimento.adicionar(t);
+    pilhaReabertura.adicionar(t);
     arvorePrioridade.inserir(t);
-    historico.inserir(t);
+    historico.adicionar(t);
 
     return true;
 }
@@ -50,22 +59,31 @@ bool TicketService::createTicket(const TicketRequest& req, int userId) {
 // ======================================================
 // UPDATE STATUS
 // ======================================================
-bool TicketService::updateTicketStatus(int id, const std::string& status) {
+bool TicketService::updateTicketStatus(
+    int id,
+    const std::string& status
+) {
     auto ticketOpt = ticketRepo_.findById(id);
-    if (!ticketOpt) return false;
 
-    if (!ticketRepo_.updateStatus(id, status)) return false;
+    if (!ticketOpt)
+        return false;
+
+    bool updated = ticketRepo_.updateStatus(id, status);
+
+    if (!updated)
+        return false;
 
     Ticket t = *ticketOpt;
     t.status = status;
 
-    // Histórico em memória
-    historico.inserir(t);
+    historico.adicionar(t);
 
-    // Reabertura: reintroduz no fluxo (fila + prioridade)
+    // =========================================
+    // Reabertura
+    // =========================================
     if (status == "reaberto") {
-        pilhaReabertura.push(t);
-        filaAtendimento.enfileirar(t);
+        pilhaReabertura.adicionar(t);
+        filaAtendimento.adicionar(t);
         arvorePrioridade.inserir(t);
     }
 
@@ -73,98 +91,141 @@ bool TicketService::updateTicketStatus(int id, const std::string& status) {
 }
 
 // ======================================================
-// DELETE
+// DELETE TICKET
 // ======================================================
 bool TicketService::deleteTicket(int id) {
     return ticketRepo_.remove(id);
 }
 
 // ======================================================
-// PROCESSAR PRÓXIMO TICKET (FILA)
+// PROCESS NEXT TICKET (FILA)
 // ======================================================
 bool TicketService::processNextTicket() {
-    Ticket t = filaAtendimento.desenfileirar();
 
-    // Heurística: Fila vazia retorna Ticket() com id=0.
-    if (t.id == 0) return false;
+    if (filaAtendimento.vazia())
+        return false;
+
+    Ticket t = filaAtendimento.proximo();
+
+    filaAtendimento.remover();
 
     t.status = "em andamento";
-    if (!ticketRepo_.updateStatus(t.id, t.status)) return false;
 
-    historico.inserir(t);
+    bool ok = ticketRepo_.updateStatus(
+        t.id,
+        t.status
+    );
+
+    if (!ok)
+        return false;
+
+    historico.adicionar(t);
+
     return true;
 }
 
 // ======================================================
-// PRIORIDADE (ABB)
+// GET TICKETS BY PRIORITY
 // ======================================================
 std::vector<Ticket> TicketService::getTicketsByPriority() {
-    // ABB não retorna lista (apenas listar/print). Então DB é fonte de verdade.
+
     auto tickets = ticketRepo_.findAll();
 
     auto rank = [](const std::string& p) {
-        if (p == "alta") return 0;
-        if (p == "media" || p == "média") return 1;
-        if (p == "baixa") return 2;
+
+        if (p == "alta")
+            return 0;
+
+        if (p == "media" || p == "média")
+            return 1;
+
+        if (p == "baixa")
+            return 2;
+
         return 3;
     };
 
-    std::stable_sort(tickets.begin(), tickets.end(), [&](const Ticket& a, const Ticket& b) {
-        return rank(a.priority) < rank(b.priority);
-    });
+    std::stable_sort(
+        tickets.begin(),
+        tickets.end(),
+        [&](const Ticket& a, const Ticket& b) {
+            return rank(a.priority) < rank(b.priority);
+        }
+    );
 
     return tickets;
 }
 
 // ======================================================
-// REABRIR ÚLTIMO (PILHA)
+// REOPEN LAST TICKET (PILHA)
 // ======================================================
 void TicketService::reopenLastTicket() {
-    Ticket t = pilhaReabertura.pop();
-    if (t.id == 0) return;
+
+    if (pilhaReabertura.vazia())
+        return;
+
+    Ticket t = pilhaReabertura.remover();
 
     t.status = "reaberto";
-    ticketRepo_.updateStatus(t.id, t.status);
 
-    filaAtendimento.enfileirar(t);
-    historico.inserir(t);
+    ticketRepo_.updateStatus(
+        t.id,
+        t.status
+    );
+
+    filaAtendimento.adicionar(t);
+
+    historico.adicionar(t);
 }
 
 // ======================================================
-// HISTÓRICO
+// HISTORY
 // ======================================================
 std::vector<Ticket> TicketService::getHistory() {
-    // Lista retorna vector (lista.h).
     return historico.listar();
 }
 
 // ======================================================
-// FILA (para endpoint admin)
+// GET FILA
 // ======================================================
 std::vector<Ticket> TicketService::getFila() {
-    // Fila não expõe iteração/listagem retornável.
-    // Então retornamos via DB (fonte de verdade) apenas tickets em aberto/em andamento.
+
     auto tickets = ticketRepo_.findAll();
 
     std::vector<Ticket> out;
-    out.reserve(tickets.size());
 
     for (const auto& t : tickets) {
-        if (t.status != "resolvido") out.push_back(t);
+
+        if (
+            t.status == "aberto" ||
+            t.status == "em andamento" ||
+            t.status == "reaberto"
+        ) {
+            out.push_back(t);
+        }
     }
 
-    // Ordenação estável por prioridade (secundária) para consistência do front.
     auto rank = [](const std::string& p) {
-        if (p == "alta") return 0;
-        if (p == "media" || p == "média") return 1;
-        if (p == "baixa") return 2;
+
+        if (p == "alta")
+            return 0;
+
+        if (p == "media" || p == "média")
+            return 1;
+
+        if (p == "baixa")
+            return 2;
+
         return 3;
     };
 
-    std::stable_sort(out.begin(), out.end(), [&](const Ticket& a, const Ticket& b) {
-        return rank(a.priority) < rank(b.priority);
-    });
+    std::stable_sort(
+        out.begin(),
+        out.end(),
+        [&](const Ticket& a, const Ticket& b) {
+            return rank(a.priority) < rank(b.priority);
+        }
+    );
 
     return out;
 }
-

@@ -1,4 +1,6 @@
 #include "services/AuthService.hpp"
+#include "repositories/UserRepository.hpp"
+#include "models/User.hpp"
 #include "core/server/JWTService.hpp"
 
 #include <iostream>
@@ -148,10 +150,13 @@ AuthResult AuthService::forgotPassword(const std::string& email) {
     std::string link =
         "http://localhost:5173/reset-password/" + token;
 
-    sendEmail(email, link);
+    std::string body =
+    "Clique no link para redefinir sua senha:\n\n" + link;
 
     std::cout << "\n====================================\n";
-    std::cout << "LINK RESET:\n" << link << std::endl;
+    std::cout << "[EMAIL SIMULADO]\n";
+    std::cout << "PARA: " << email << "\n";
+    std::cout << body << std::endl;
     std::cout << "====================================\n\n";
 
     result.success = true;
