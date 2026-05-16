@@ -13,9 +13,6 @@
 #include <optional>
 #include <string>
 
-// ======================================================
-// SERVICE (MOTOR DO HELP DESK)
-// ======================================================
 class TicketService {
 public:
     explicit TicketService(TicketRepository& ticketRepo);
@@ -31,14 +28,19 @@ public:
     bool deleteTicket(int id);
 
     // =========================
-    // MOTOR
+    // MOTOR (ADMIN/GERAL)
     // =========================
-    bool processNextTicket();                 // fila -> processa (operação única)
+    bool processNextTicket();
     std::vector<Ticket> getTicketsByPriority();
-    void reopenLastTicket();                 // pilha
+    void reopenLastTicket();
     std::vector<Ticket> getHistory();
-
     std::vector<Ticket> getFila();
+
+    // =========================
+    // MEUS TICKETS (USER)
+    // =========================
+    std::vector<Ticket> getMyActiveTickets(int userId);
+    std::vector<Ticket> getMyResolvedHistory(int userId);
 
 private:
     TicketRepository& ticketRepo_;

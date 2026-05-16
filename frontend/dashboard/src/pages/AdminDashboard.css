@@ -267,3 +267,21 @@ section h2 {
   color: white;
   text-align: center;
 }
+/* DELETE BUTTON */
+
+.delete-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #ef4444;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.delete-btn:hover {
+  background: #dc2626;
+}

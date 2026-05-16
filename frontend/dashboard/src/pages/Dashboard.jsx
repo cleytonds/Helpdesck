@@ -47,6 +47,10 @@ export default function Dashboard() {
             Meus Chamados
           </Link>
 
+          <Link to="/tickets/history">
+            Histórico
+          </Link>
+
           {user?.role === "admin" && (
             <Link to="/admin/tickets">
               Painel Admin

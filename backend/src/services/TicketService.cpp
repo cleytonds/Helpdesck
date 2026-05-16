@@ -9,10 +9,23 @@ TicketService::TicketService(TicketRepository& ticketRepo)
     : ticketRepo_(ticketRepo) {}
 
 // ======================================================
-// GET ALL TICKETS
+// GET ALL TICKETS (ADMIN/GERAL) - apenas ativos
 // ======================================================
 std::vector<Ticket> TicketService::getAllTickets() const {
-    return ticketRepo_.findAll();
+    auto tickets = ticketRepo_.findAll();
+
+    std::vector<Ticket> ativos;
+    for (const auto& t : tickets) {
+        if (
+            t.status == "aberto" ||
+            t.status == "andamento" ||
+            t.status == "reaberto"
+        ) {
+            ativos.push_back(t);
+        }
+    }
+
+    return ativos;
 }
 
 // ======================================================
@@ -26,7 +39,8 @@ std::optional<Ticket> TicketService::getTicketById(int id) const {
 // CREATE TICKET
 // ======================================================
 bool TicketService::createTicket(const TicketRequest& req, int userId) {
-    if (!req.isValid()) return false;
+    if (!req.isValid())
+        return false;
 
     int id = ticketRepo_.create(
         req.title,
@@ -35,7 +49,8 @@ bool TicketService::createTicket(const TicketRequest& req, int userId) {
         userId
     );
 
-    if (id <= 0) return false;
+    if (id <= 0)
+        return false;
 
     Ticket t;
     t.id = id;
@@ -45,13 +60,8 @@ bool TicketService::createTicket(const TicketRequest& req, int userId) {
     t.status = "aberto";
     t.userId = userId;
 
-    // =========================================
-    // Estruturas em memória
-    // =========================================
     filaAtendimento.adicionar(t);
-    pilhaReabertura.adicionar(t);
     arvorePrioridade.inserir(t);
-    historico.adicionar(t);
 
     return true;
 }
@@ -63,26 +73,24 @@ bool TicketService::updateTicketStatus(
     int id,
     const std::string& status
 ) {
-    auto ticketOpt = ticketRepo_.findById(id);
 
+    auto ticketOpt = ticketRepo_.findById(id);
     if (!ticketOpt)
         return false;
 
     bool updated = ticketRepo_.updateStatus(id, status);
-
     if (!updated)
         return false;
 
     Ticket t = *ticketOpt;
     t.status = status;
 
-    historico.adicionar(t);
-
-    // =========================================
-    // Reabertura
-    // =========================================
-    if (status == "reaberto") {
+    if (status == "resolvido") {
+        historico.adicionar(t);
         pilhaReabertura.adicionar(t);
+    }
+
+    if (status == "reaberto") {
         filaAtendimento.adicionar(t);
         arvorePrioridade.inserir(t);
     }
@@ -98,7 +106,7 @@ bool TicketService::deleteTicket(int id) {
 }
 
 // ======================================================
-// PROCESS NEXT TICKET (FILA)
+// PROCESS NEXT TICKET
 // ======================================================
 bool TicketService::processNextTicket() {
 
@@ -106,10 +114,9 @@ bool TicketService::processNextTicket() {
         return false;
 
     Ticket t = filaAtendimento.proximo();
-
     filaAtendimento.remover();
 
-    t.status = "em andamento";
+    t.status = "andamento";
 
     bool ok = ticketRepo_.updateStatus(
         t.id,
@@ -119,45 +126,46 @@ bool TicketService::processNextTicket() {
     if (!ok)
         return false;
 
-    historico.adicionar(t);
-
     return true;
 }
 
 // ======================================================
-// GET TICKETS BY PRIORITY
+// PRIORIDADES
 // ======================================================
 std::vector<Ticket> TicketService::getTicketsByPriority() {
 
     auto tickets = ticketRepo_.findAll();
 
-    auto rank = [](const std::string& p) {
+    std::vector<Ticket> ativos;
+    for (const auto& t : tickets) {
+        if (t.status != "resolvido") {
+            ativos.push_back(t);
+        }
+    }
 
+    auto rank = [](const std::string& p) {
         if (p == "alta")
             return 0;
-
         if (p == "media" || p == "média")
             return 1;
-
         if (p == "baixa")
             return 2;
-
         return 3;
     };
 
     std::stable_sort(
-        tickets.begin(),
-        tickets.end(),
+        ativos.begin(),
+        ativos.end(),
         [&](const Ticket& a, const Ticket& b) {
             return rank(a.priority) < rank(b.priority);
         }
     );
 
-    return tickets;
+    return ativos;
 }
 
 // ======================================================
-// REOPEN LAST TICKET (PILHA)
+// REOPEN LAST TICKET
 // ======================================================
 void TicketService::reopenLastTicket() {
 
@@ -174,58 +182,45 @@ void TicketService::reopenLastTicket() {
     );
 
     filaAtendimento.adicionar(t);
-
-    historico.adicionar(t);
 }
 
 // ======================================================
-// HISTORY
+// HISTORY (ADMIN/GLOBAL) - resolvidos
 // ======================================================
 std::vector<Ticket> TicketService::getHistory() {
-    return historico.listar();
+    return ticketRepo_.findResolvedTickets();
 }
 
 // ======================================================
-// GET FILA
+// MEUS TICKETS (USER)
+// ======================================================
+std::vector<Ticket> TicketService::getMyActiveTickets(int userId) {
+    // SQL filtra: user_id = ? AND status != 'resolvido'
+    return ticketRepo_.findTicketsByUserActive(userId);
+}
+
+std::vector<Ticket> TicketService::getMyResolvedHistory(int userId) {
+    // SQL filtra: user_id = ? AND status = 'resolvido'
+    return ticketRepo_.findResolvedTicketsByUser(userId);
+}
+
+// ======================================================
+// FILA
 // ======================================================
 std::vector<Ticket> TicketService::getFila() {
-
     auto tickets = ticketRepo_.findAll();
 
-    std::vector<Ticket> out;
-
+    std::vector<Ticket> fila;
     for (const auto& t : tickets) {
-
         if (
             t.status == "aberto" ||
-            t.status == "em andamento" ||
+            t.status == "andamento" ||
             t.status == "reaberto"
         ) {
-            out.push_back(t);
+            fila.push_back(t);
         }
     }
 
-    auto rank = [](const std::string& p) {
-
-        if (p == "alta")
-            return 0;
-
-        if (p == "media" || p == "média")
-            return 1;
-
-        if (p == "baixa")
-            return 2;
-
-        return 3;
-    };
-
-    std::stable_sort(
-        out.begin(),
-        out.end(),
-        [&](const Ticket& a, const Ticket& b) {
-            return rank(a.priority) < rank(b.priority);
-        }
-    );
-
-    return out;
+    return fila;
 }
+

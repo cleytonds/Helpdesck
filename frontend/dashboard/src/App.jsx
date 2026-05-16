@@ -8,11 +8,15 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Tickets from "./pages/Tickets";
+import MyTickets from "./pages/MyTickets";
+import History from "./pages/History";
+
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminTickets from "./pages/AdminTickets";
 import VerifyEmail from "./pages/VerifyEmail";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+
 
 // Routes protegidas
 import PrivateRoute from "./routes/PrivateRoute";
@@ -61,6 +65,27 @@ export default function App() {
           />
 
           {/* ===================== */}
+          {/* USER PAGES */}
+          {/* ===================== */}
+          <Route
+            path="/my-tickets"
+            element={
+              <PrivateRoute>
+                <MyTickets />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/tickets/history"
+            element={
+              <PrivateRoute>
+                <History />
+              </PrivateRoute>
+            }
+          />
+
+          {/* ===================== */}
           {/* ADMIN DASHBOARD */}
           {/* ===================== */}
           <Route
@@ -71,6 +96,7 @@ export default function App() {
               </AdminRoute>
             }
           />
+
 
           {/* ===================== */}
           {/* ADMIN TICKETS */}

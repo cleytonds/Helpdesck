@@ -1,5 +1,7 @@
 #include "controllers/TicketController.hpp"
+
 #include "json.hpp"
+#include "core/middleware/JWTMiddleware.hpp"
 
 using json = nlohmann::json;
 
@@ -38,7 +40,6 @@ void TicketController::getTicketById(
     int id = std::stoi(req.matches[1]);
 
     auto ticket = service_.getTicketById(id);
-
     if (!ticket) {
         res.status = 404;
         res.set_content(R"({"error":"Ticket nao encontrado"})", "application/json");
@@ -82,11 +83,16 @@ void TicketController::createTicket(
     ticketReq.description = body["description"].get<std::string>();
     ticketReq.priority = body["priority"].get<std::string>();
 
-    // TODO: se houver auth real, trocar userId=1.
-    int userId = 1;
+    JWTPayload payload;
+    bool authed = JWTMiddleware::authenticate(req, payload);
 
-    bool ok = service_.createTicket(ticketReq, userId);
+    if (!authed || payload.userId <= 0) {
+        res.status = 401;
+        res.set_content(R"({"success":false,"message":"Unauthorized"})", "application/json");
+        return;
+    }
 
+    bool ok = service_.createTicket(ticketReq, payload.userId);
     if (!ok) {
         res.status = 400;
         res.set_content(R"({"error":"Erro ao criar ticket"})", "application/json");
@@ -122,7 +128,6 @@ void TicketController::updateTicketStatus(
     std::string status = body["status"].get<std::string>();
 
     bool ok = service_.updateTicketStatus(id, status);
-
     if (!ok) {
         res.status = 400;
         res.set_content(R"({"error":"Erro ao atualizar status"})", "application/json");
@@ -140,7 +145,6 @@ void TicketController::deleteTicket(
     int id = std::stoi(req.matches[1]);
 
     bool ok = service_.deleteTicket(id);
-
     if (!ok) {
         res.status = 400;
         res.set_content(R"({"error":"Erro ao deletar ticket"})", "application/json");
@@ -176,7 +180,7 @@ void TicketController::getFila(
 }
 
 // ======================================================
-// ADMIN: HISTÓRICO
+// ADMIN: HISTÓRICO (GLOBAL)
 // ======================================================
 void TicketController::getHistorico(
     const httplib::Request&, 
@@ -214,6 +218,74 @@ void TicketController::getPrioridades(
 
     for (const auto& t : tickets) {
         response["prioridades"].push_back({
+            {"id", t.id},
+            {"title", t.title},
+            {"description", t.description},
+            {"priority", t.priority},
+            {"status", t.status}
+        });
+    }
+
+    res.set_content(response.dump(4), "application/json");
+}
+
+// ======================================================
+// USER: MEUS CHAMADOS (ATIVOS)
+// ======================================================
+void TicketController::getMyActiveTickets(
+    const httplib::Request& req,
+    httplib::Response& res
+) {
+    JWTPayload payload;
+    bool authed = JWTMiddleware::authenticate(req, payload);
+
+    if (!authed || payload.userId <= 0) {
+        res.status = 401;
+        res.set_content(R"({"success":false,"message":"Unauthorized"})", "application/json");
+        return;
+    }
+
+    auto tickets = service_.getMyActiveTickets(payload.userId);
+
+    json response;
+    response["tickets"] = json::array();
+
+    for (const auto& t : tickets) {
+        response["tickets"].push_back({
+            {"id", t.id},
+            {"title", t.title},
+            {"description", t.description},
+            {"priority", t.priority},
+            {"status", t.status}
+        });
+    }
+
+    res.set_content(response.dump(4), "application/json");
+}
+
+// ======================================================
+// USER: HISTÓRICO (RESOLVIDOS)
+// ======================================================
+void TicketController::getMyHistory(
+    const httplib::Request& req,
+    httplib::Response& res
+) {
+    JWTPayload payload;
+    bool authed = JWTMiddleware::authenticate(req, payload);
+
+    if (!authed || payload.userId <= 0) {
+        res.status = 401;
+        res.set_content(R"({"success":false,"message":"Unauthorized"})", "application/json");
+        return;
+    }
+
+    auto tickets = service_.getMyResolvedHistory(payload.userId);
+
+    json response;
+    response["tickets"] = json::array();
+
+    for (const auto& t : tickets) {
+        response["tickets"].push_back({
             {"id", t.id},
             {"title", t.title},
             {"description", t.description},

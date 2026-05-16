@@ -1,47 +1,149 @@
-import { useEffect, useState, useContext } from "react";
-import api from "../services/api";
-import { AuthContext } from "../context/AuthContext";
-import "./Dashboard.css";
+/* =========================
+   CONTAINER
+========================= */
 
-export default function MyTickets() {
-  const { user } = useContext(AuthContext);
-  const [tickets, setTickets] = useState([]);
-  const [loading, setLoading] = useState(true);
+.mytickets-container {
+  min-height: 100vh;
+  padding: 40px;
+  background: linear-gradient(to bottom right, #0f172a, #111827);
+  color: #fff;
+}
 
-  async function loadMyTickets() {
-    try {
-      const res = await api.get(`/tickets/my?user_id=${user.id}`);
-      setTickets(res.data?.tickets ?? []);
-    } catch (err) {
-      console.error("Erro ao buscar chamados:", err);
-    } finally {
-      setLoading(false);
-    }
+/* =========================
+   TITLE
+========================= */
+
+.mytickets-container h1 {
+  font-size: 36px;
+  margin-bottom: 35px;
+  font-weight: 700;
+  color: #f8fafc;
+  border-left: 6px solid #3b82f6;
+  padding-left: 15px;
+}
+
+/* =========================
+   GRID
+========================= */
+
+.tickets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 25px;
+}
+
+/* =========================
+   CARD
+========================= */
+
+.ticket-card {
+  background: rgba(30, 41, 59, 0.95);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 18px;
+  padding: 24px;
+  transition: all 0.3s ease;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.25),
+    0 0 0 transparent;
+  backdrop-filter: blur(8px);
+}
+
+.ticket-card:hover {
+  transform: translateY(-6px);
+  border-color: #3b82f6;
+  box-shadow:
+    0 10px 30px rgba(59, 130, 246, 0.25),
+    0 0 15px rgba(59, 130, 246, 0.15);
+}
+
+/* =========================
+   TITULO DO CHAMADO
+========================= */
+
+.ticket-card h3 {
+  font-size: 22px;
+  margin-bottom: 18px;
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+/* =========================
+   TEXTO
+========================= */
+
+.ticket-card p {
+  margin: 10px 0;
+  line-height: 1.6;
+  color: #e2e8f0;
+  font-size: 15px;
+}
+
+.ticket-card strong {
+  color: #f8fafc;
+}
+
+/* =========================
+   STATUS
+========================= */
+
+.ticket-card p:nth-child(3) {
+  margin-top: 20px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+  font-weight: 600;
+  display: inline-block;
+}
+
+/* =========================
+   PRIORIDADE
+========================= */
+
+.ticket-card p:nth-child(4) {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(234, 179, 8, 0.12);
+  color: #fde68a;
+  font-weight: 600;
+  display: inline-block;
+}
+
+/* =========================
+   LOADING / ERROR
+========================= */
+
+.loading,
+.error {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  background: #0f172a;
+  color: white;
+}
+
+.error {
+  color: #f87171;
+}
+
+/* =========================
+   RESPONSIVO
+========================= */
+
+@media (max-width: 768px) {
+
+  .mytickets-container {
+    padding: 20px;
   }
 
-  useEffect(() => {
-    if (user?.id) {
-      loadMyTickets();
-    }
-  }, [user]);
+  .mytickets-container h1 {
+    font-size: 28px;
+  }
 
-  if (loading) return <h2>Carregando...</h2>;
-
-  return (
-    <div className="dashboard-container">
-
-      <h1>Meus Chamados</h1>
-
-      <div className="cards-grid">
-        {(tickets ?? []).map((t) => (
-          <div key={t.id} className="card">
-            <h3>{t.title}</h3>
-            <p>{t.description}</p>
-            <span>Status: {t.status}</span>
-          </div>
-        ))}
-      </div>
-
-    </div>
-  );
+  .tickets-grid {
+    grid-template-columns: 1fr;
+  }
 }

@@ -72,9 +72,24 @@ void setupRoutes(httplib::Server& server,
         ticket.getAllTickets(req, res);
     });
 
+    // Usuário: Meus Chamados (ativos)
+    server.Get("/tickets/me", [&](const auto& req, auto& res) {
+        ticket.getMyActiveTickets(req, res);
+    });
+
+
+    // Usuário: Histórico (resolvidos)
+    server.Get("/tickets/history", [&](const auto& req, auto& res) {
+        ticket.getMyHistory(req, res);
+    });
+
+
     server.Post("/tickets", [&](const auto& req, auto& res) {
         ticket.createTicket(req, res);
     });
+
+    // Nota: rotas admin continuam intocadas ( /admin/* )
+
 
     server.Put(R"(/tickets/(\d+))", [&](const auto& req, auto& res) {
         ticket.updateTicketStatus(req, res);

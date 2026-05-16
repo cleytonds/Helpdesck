@@ -1,22 +1,22 @@
 import { useEffect, useState, useContext } from "react";
 import api from "../services/api";
 import { AuthContext } from "../context/AuthContext";
-import "./MyTickets.css";
+import "./History.css";
 
-export default function MyTickets() {
+export default function History() {
   const { user } = useContext(AuthContext);
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  async function loadMyTickets() {
+  async function loadHistory() {
     try {
       setError("");
-      const res = await api.get("/tickets/me");
+      const res = await api.get("/tickets/history");
       setTickets(res.data?.tickets ?? []);
     } catch (err) {
-      console.error("Erro ao buscar chamados:", err);
-      setError(err.response?.data?.message || "Erro ao carregar chamados");
+      console.error("Erro ao buscar histórico:", err);
+      setError(err.response?.data?.message || "Erro ao carregar histórico");
     } finally {
       setLoading(false);
     }
@@ -24,33 +24,30 @@ export default function MyTickets() {
 
   useEffect(() => {
     if (user?.id) {
-      loadMyTickets();
+      loadHistory();
     } else {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  if (loading) return <h2>Carregando...</h2>;
+  if (loading) return <div className="loading">Carregando...</div>;
   if (error) return <div className="error">{error}</div>;
 
   return (
-    <div className="mytickets-container">
-      <h1>Meus Chamados</h1>
-      <div className="tickets-grid">
+    <div className="history-container">
+      <h1>Histórico</h1>
+      <div className="cards-grid">
         {(tickets ?? []).map((ticket) => (
-          <div key={ticket.id} className="ticket-card">
+          <div key={ticket.id} className="card">
             <h3>{ticket.title}</h3>
             <p>{ticket.description}</p>
-            <p>
-              <strong>Status:</strong> {ticket.status}
-            </p>
-            <p>
-              <strong>Prioridade:</strong> {ticket.priority}
-            </p>
+            <span>Status: {ticket.status}</span>
+            <span className="priority">Prioridade: {ticket.priority}</span>
           </div>
         ))}
       </div>
     </div>
   );
 }
+

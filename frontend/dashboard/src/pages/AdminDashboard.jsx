@@ -16,7 +16,7 @@ export default function AdminDashboard() {
   // ==============================
   // LOAD CENTRALIZADO
   // ==============================
-  async function loadAll() {
+    async function loadAll() {
     setLoading(true);
     setError(null);
 
@@ -29,17 +29,26 @@ export default function AdminDashboard() {
       ]);
 
       setTickets(t.data?.tickets ?? []);
+
       setFila(f.data?.tickets ?? []);
-      setHistorico(h.data?.tickets ?? []);
-      setPrioridades(p.data?.tickets ?? []);
+
+      // CORREÇÃO
+      setHistorico(h.data?.historico ?? []);
+
+      setPrioridades(p.data?.prioridades ?? []);
+
     } catch (err) {
+
       console.error(err);
+
       setError("Erro ao carregar dados do painel");
+
     } finally {
+
       setLoading(false);
+
     }
   }
-
   // ==============================
   // UPDATE TICKET
   // ==============================
@@ -60,6 +69,61 @@ export default function AdminDashboard() {
   useEffect(() => {
     loadAll();
   }, []);
+
+  // ==============================
+  // UPDATE TICKET
+  // ==============================
+    async function updateTicket(id, status, level) {
+
+    try {
+
+      setLoading(true);
+
+      await api.put(`/tickets/${id}`, {
+        status,
+        level,
+      });
+
+      await loadAll();
+
+    } catch (err) {
+
+      console.error(err);
+
+      setError("Erro ao atualizar ticket");
+
+    } finally {
+
+      setLoading(false);
+
+    }
+  }
+
+  // ==============================
+  // DELETE TICKET
+  // ==============================
+    async function deleteTicket(id) {
+
+    try {
+
+      setLoading(true);
+
+      await api.delete(`/tickets/${id}`);
+
+      await loadAll();
+
+    } catch (err) {
+
+      console.error(err);
+
+      setError("Erro ao excluir ticket");
+
+    } finally {
+
+      setLoading(false);
+
+    }
+  }
 
   // ==============================
   // STATES UI
@@ -170,7 +234,19 @@ export default function AdminDashboard() {
         <div className="simple-grid">
           {(historico ?? []).map((t) => (
             <div key={t.id} className="mini-card">
-              {t.title} - {t.status}
+
+              <strong>{t.title}</strong>
+
+              <p>{t.description}</p>
+
+              <p>Status: {t.status}</p>
+
+              <button
+                onClick={() => deleteTicket(t.id)}
+              >
+                Excluir
+              </button>
+
             </div>
           ))}
         </div>
