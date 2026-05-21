@@ -1,223 +1,242 @@
-# 🚀 HelpDesk System - Enterprise Grade (C++ Backend + React Frontend + MySQL)
+# 🧩 HelpDesk — Full Stack (C++ REST + React/Vite + MySQL)
 
-Sistema completo de HelpDesk inspirado em aplicações reais de mercado, com arquitetura modular, backend em C++ de alta performance e frontend moderno em React.
+[![C++](https://img.shields.io/badge/C%2B%2B-REST-00599C?style=flat-square)](#)
+[![React](https://img.shields.io/badge/React-Vite-61DAFB?style=flat-square)](#)
+[![MySQL](https://img.shields.io/badge/MySQL-MariaDB-orange?style=flat-square)](#)
+[![JWT](https://img.shields.io/badge/JWT-Auth-8A2BE2?style=flat-square)](#)
 
----
-
-## 🏷️ Status do Projeto
-
-![Status](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)
-![Backend](https://img.shields.io/badge/backend-C%2B%2B-blue)
-![Frontend](https://img.shields.io/badge/frontend-React-61dafb)
-![Database](https://img.shields.io/badge/database-MySQL-orange)
+> Documentação baseada **exclusivamente** no código presente no repositório.
 
 ---
 
-## 📌 Visão Geral
+## Visão geral
+O projeto implementa um HelpDesk com:
+- **Backend em C++** (server HTTP, controllers/services/repositories)
+- **Frontend em React/Vite** consumindo a API via **Axios**
+- **MySQL/MariaDB** acessado via **C-API** (`mysql_*`, `MYSQL*`, `mysql_query`, `mysql_stmt_*`)
 
-O sistema simula uma plataforma profissional de suporte técnico (HelpDesk), permitindo gerenciamento de chamados, usuários e filas de atendimento.
-
-Ele foi desenvolvido com foco em:
-
-* Arquitetura de software real
-* Estruturas de dados aplicadas
-* Comunicação backend/frontend via API
-* Boas práticas de engenharia de software
-
----
-
-## 🧠 Arquitetura do Sistema
-
-```
-Frontend (React)
-      ↓ Axios (HTTP API)
-Backend (C++ Server)
-      ↓
-MySQL Database
-```
-
-### 🧩 Diagrama Simplificado
-
-```
-[ React UI ] → [ API C++ Server ] → [ MySQL ]
-```
+### O que existe hoje (funcionalidades reais)
+- ✅ Autenticação:
+  - `POST /login`, `POST /register`
+  - `POST /forgot-password`, `POST /reset-password`
+  - token gerado/validado no backend via `JWTService` e `JWTMiddleware`
+- ✅ Chamados/Tickets:
+  - `POST /tickets` (JWT)
+  - `PUT /tickets/:id` (atualiza status)
+  - `DELETE /tickets/:id`
+  - listagens e histórico por usuário
+- ✅ Admin:
+  - endpoints de fila, histórico global e prioridades
 
 ---
 
-## ⚙️ Tecnologias Utilizadas
-
-### Backend (Core System)
-
-* C++17
-* MSYS2 / g++
-* MySQL Connector C++
-* Makefile build system
-* Estruturas de dados:
-
-  * Fila (Queue)
-  * Pilha (Stack)
-  * Lista encadeada
-  * Árvore Binária de Busca (ABB)
-
-### Frontend (UI Layer)
-
-* React (Vite)
-* Axios (HTTP requests)
-* React Router DOM
-
-### Banco de Dados
-
-* MySQL
+## Tabela de tecnologias
+| Camada | Tecnologia | Evidência no código |
+|---|---|---|
+| Backend | C++17/17 | `backend/src/*` |
+| HTTP | cpp-httplib | `#include "httplib.h"` e uso em `backend/src/server.cpp` |
+| JSON | nlohmann/json | `backend/src/controllers/*` |
+| Auth | JWT simplificado (interno) | `backend/src/core/server/JWTService.cpp`, `backend/src/core/middleware/JWTMiddleware.cpp` |
+| Middlewares | JWTMiddleware + AuthMiddleware (placeholder) | `backend/src/core/middleware/*` |
+| DB | MySQL/MariaDB C-API | `backend/src/repositories/*` |
+| Frontend | React + Vite | `frontend/dashboard/*` |
+| HTTP Client | Axios | `frontend/dashboard/src/services/api.js` |
+| Sessão | localStorage | `frontend/dashboard/src/context/AuthContext.jsx` |
+| Roteamento | react-router-dom | `frontend/dashboard/src/App.jsx` |
 
 ---
 
-## 📁 Estrutura do Backend
+## Estrutura de pastas (mapa real)
+### Backend
+- `backend/src/server.cpp` — roteador principal (setup de rotas)
+- `backend/src/controllers/*` — handlers de endpoints
+- `backend/src/services/*` — regras de negócio (AuthService/TicketService)
+- `backend/src/repositories/*` — persistência SQL (UserRepository/TicketRepository)
+- `backend/src/core/middleware/*` — JWT/Auth/Role middleware
+- `backend/src/core/server/JWTService.cpp` — token/parse
+- `backend/include/structures/*` — estruturas de dados customizadas (fila/pilha/lista/ABB/ordenação)
 
-```
-src/
- ├── api.cpp
- ├── server.cpp
- ├── database.cpp
- ├── check.cpp
- ├── fila.cpp
- ├── lista.cpp
- ├── pilha.cpp
- ├── abb.cpp
- ├── ordenacao.cpp
- ├── main.cpp
-```
+### Frontend (dashboard)
+- `frontend/dashboard/src/App.jsx` — rotas públicas/privadas/admin
+- `frontend/dashboard/src/context/AuthContext.jsx` — login/logout e restauração de sessão
+- `frontend/dashboard/src/services/api.js` — axios instance + interceptors
+- `frontend/dashboard/src/services/authService.js` — wrappers de endpoints
+- `frontend/dashboard/src/pages/*` — UI
+- `frontend/dashboard/src/routes/*` — `PrivateRoute`, `AdminRoute`
 
-### ▶️ Build & Run
+---
 
-```bash
-make clean
-make
-./bin/servidor.exe
+## Arquitetura (MVC + Services + Repositories)
+```mermaid
+flowchart LR
+  UI[React UI (pages/components)] -->|Axios HTTP + Authorization: Bearer| API[Backend HTTP Server (httplib)]
+  API -->|Controller| C[Controllers]
+  C -->|calls| S[Services]
+  S -->|calls| R[Repositories]
+  R -->|SQL| DB[(MySQL/MariaDB)]
+
+  subgraph Auth
+    S --> JWT[JWTService]
+    CI[JWTMiddleware] -->|authenticate| C
+  end
 ```
 
 ---
 
-## 🌐 Frontend Architecture
+## Fluxo completo: Frontend → API → Backend → MySQL
 
-```
-src/
- ├── api/ (Axios config)
- ├── pages/
- │    ├── Login.jsx
- │    ├── Dashboard.jsx
- │    ├── Tickets.jsx
- ├── components/
- │    ├── Navbar.jsx
- │    ├── Sidebar.jsx
- ├── context/
- │    ├── AuthContext.jsx
+### Login/JWT
+```mermaid
+sequenceDiagram
+  participant FE as React (AuthContext)
+  participant AX as Axios (api.js interceptor)
+  participant BE as Backend (server.cpp/controller)
+  participant US as UserRepository (SQL)
+  participant JWT as JWTService
+
+  FE->>AX: loginRequest({email,password})
+  AX->>BE: POST /login
+  BE->>BE: AuthController::login (parse JSON)
+  BE->>US: findByEmail(email)
+  US-->>BE: user
+  BE->>JWT: generateToken(user.id,user.email,user.role)
+  BE-->>AX: { success, token, user }
+  FE->>FE: localStorage.setItem(token,user)
 ```
 
-### ▶️ Run Frontend
-
-```bash
-npm install
-npm run dev
-```
+### Abrir ticket e vínculo `user_id`
+- Frontend envia `POST /tickets` com **Authorization** via interceptor
+- Backend autentica com `JWTMiddleware::authenticate(req,payload)`
+- O `userId` vem do payload e é passado para `TicketService::createTicket(..., payload.userId)`
+- `TicketRepository::create(..., userId)` persiste `user_id` no banco
 
 ---
 
-## 🔌 API Communication
+## Autenticação JWT + segurança
+### JWTService (como o token funciona no seu código)
+- Token gerado em `backend/src/core/server/JWTService.cpp` como:
+  - `jwt|userId|email|role`
 
-Base URL:
+### JWTMiddleware (validação real)
+- `backend/src/core/middleware/JWTMiddleware.cpp`
+  - extrai `Authorization: Bearer <token>`
+  - faz `JWTService::validateToken(token,payload)`
 
-```
-http://localhost:3000
-```
+### Axios interceptors (frontend)
+- `frontend/dashboard/src/services/api.js`
+  - injeta `Authorization: Bearer ${localStorage.getItem('token')}`
+  - em `401` limpa localStorage e redireciona para `/login`
 
-Exemplo de request:
-
-```js
-api.post('/login', { email, senha })
-```
-
----
-
-## 🔐 Funcionalidades do Sistema
-
-### 👤 Usuário
-
-* Login / autenticação
-* Abertura de chamados
-* Visualização de tickets
-
-### 🛠️ Sistema
-
-* Gerenciamento de filas (queue system)
-* Processamento de dados com estruturas customizadas
-* Integração com banco de dados MySQL
-
-### 📊 Futuro (Roadmap)
-
-* JWT Authentication
-* Painel administrativo completo
-* Sistema de permissões (roles)
-* Notificações em tempo real
-* Chat interno entre usuário e suporte
+### Middlewares adicionais
+- `AuthMiddleware.cpp` existe mas é **placeholder** (valida só token não-vazio/tamanho)
+- `RoleMiddleware.cpp` valida `payload.role` após validação do JWT
 
 ---
 
-## 🧪 Status Técnico
+## Endpoints REST (rotas reais)
+**Base:** endpoints configurados em `backend/src/server.cpp`
 
-| Camada      | Status                |
-| ----------- | --------------------- |
-| Backend C++ | ✅ Funcional           |
-| API HTTP    | 🚧 Em evolução        |
-| Frontend    | 🚧 Em desenvolvimento |
-| Database    | ✅ Integrado           |
+### Auth
+| Método | Endpoint | Descrição |
+|---|---|---|
+| POST | `/register` | registro |
+| POST | `/login` | login + token |
+| POST | `/forgot-password` | gera token reset (email simulado via console) |
+| POST | `/reset-password` | redefine senha por `token` |
 
----
+### Tickets (usuário)
+| Método | Endpoint | JWT |
+|---|---|---|
+| GET | `/tickets` | lista (ativos não-resolvidos) |
+| GET | `/tickets/me` | **sim** |
+| GET | `/tickets/history` | **sim** |
+| POST | `/tickets` | **sim** |
+| PUT | `/tickets/:id` | (atualiza status) |
+| DELETE | `/tickets/:id` | remove |
 
-## 🐳 Docker (Futuro)
-
-```bash
-docker-compose up --build
-```
-
-Planejado:
-
-* Backend containerizado
-* Frontend containerizado
-* MySQL isolado
-
----
-
-## 📸 Screenshots (Adicionar depois)
-
-```
-/login.png
-/dashboard.png
-/tickets.png
-```
+### Admin
+| Método | Endpoint | Descrição |
+|---|---|---|
+| GET | `/admin/tickets` | listagem |
+| GET | `/admin/fila` | fila de atendimento |
+| GET | `/admin/historico` | histórico global |
+| GET | `/admin/prioridades` | ranking por prioridade |
+| PUT | `/admin/tickets/:id` | atualiza status |
 
 ---
 
-## 🚀 Deploy (Futuro)
+## Estruturas de dados: onde foram aplicadas
+Baseado em `backend/src/services/TicketService.cpp` e `backend/include/structures/*`.
 
-* Frontend: Vercel / Netlify
-* Backend: VPS (Ubuntu + Nginx)
-* Database: Cloud MySQL
-
----
-
-## 👨‍💻 Autor
-
-**Cleyton Silva**
-
-* GitHub: [https://github.com/cleytonds](https://github.com/cleytonds)
-* LinkedIn: [https://www.linkedin.com/in/cleytonds](https://www.linkedin.com/in/cleytonds)
+| Estrutura | Implementação | Uso no código |
+|---|---|---|
+| Fila | `FilaTickets` (queue) | `createTicket()` adiciona em `filaAtendimento`; `processNextTicket()` remove/proximo |
+| Pilha | `PilhaTickets` (stack) | `updateTicketStatus()` em `status=="resolvido"` adiciona em `pilhaReabertura`; `reopenLastTicket()` |
+| Lista Dupla | `ListaDupla` | histórico em memória: `historico.adicionar(t)` |
+| ABB | `ABB` | inserção por `priority`: `arvorePrioridade.inserir(t)` |
+| Ordenação | `stable_sort` e/ou `Ordenacao` | `getTicketsByPriority()` ordena por rank de prioridade |
 
 ---
 
-## 🧠 Observação Final
+## Dashboard admin (o que o código sustenta)
+O frontend tem rotas admin protegidas por `AdminRoute`:
+- `frontend/dashboard/src/routes/AdminRoute.jsx` valida `user.role === 'admin'`.
 
-Este projeto simula um sistema real de mercado e foi desenvolvido com foco em aprendizado avançado de backend, estruturas de dados e arquitetura full-stack moderna.
+Admin usa endpoints de:
+- fila (`GET /admin/fila`)
+- histórico (`GET /admin/historico`)
+- prioridades (`GET /admin/prioridades`)
 
 ---
 
-🔥 *Projeto em evolução constante para nível de portfólio profissional e vagas de estágio/desenvolvedor júnior.*
+## Problemas conhecidos / refatorações futuras (coerentes com o código)
+1. **Rotas stub**
+   - `backend/src/routes/TicketRoutes.cpp` e `backend/src/routes/AdminRoutes.cpp` retornam dados fake.
+   - Fluxo principal usa `backend/src/server.cpp`.
+2. **Inconsistência payload frontend ↔ backend**
+   - `frontend/dashboard/src/pages/Tickets.jsx` envia `category` e `userId`.
+   - O backend real `TicketController::createTicket()` exige `title`, `description`, `priority` e pega `userId` via JWT.
+3. **AuthMiddleware placeholder**
+   - `AuthMiddleware` não valida JWT real (placebo), enquanto o sistema de tickets usa `JWTMiddleware`.
+
+---
+
+## Roadmap futuro (baseado nos TODOs do repo)
+- Unificar JWT/middlewares (remover placeholders)
+- Alinhar contratos DTOs frontend ↔ backend
+- Consolidar roteamento (remover stubs `backend/src/routes/*`)
+- Melhorias de segurança (hash de senha, SQL mais seguro)
+
+---
+
+## Skills demonstradas
+- Arquitetura Full Stack (React + C++ REST)
+- Autenticação via JWT (token parsing e middleware)
+- Persistência MySQL com prepared statements (em partes)
+- Uso de estruturas de dados (fila/pilha/lista/ABB)
+- Ordenação e motores em memória no service layer
+
+---
+
+## Aprendizados
+- Separação clara entre Controller → Service → Repository
+- Importância de contratos consistentes entre frontend e backend
+- Riscos de SQL concatenado e necessidade de prepared statements consistentes
+
+---
+
+## Autor
+**Cleyton Silva** — Full Stack (C++/React/MySQL)
+
+---
+
+## Screenshots (placeholders)
+Os caminhos abaixo já estão prontos para inclusão posterior (sem imagens agora):
+- `screenshots/login.png`
+- `screenshots/dashboard.png`
+- `screenshots/tickets.png`
+- `screenshots/mytickets.png`
+- `screenshots/history.png`
+- `screenshots/admin.png`
+- `screenshots/demo.gif`
+

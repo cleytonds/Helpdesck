@@ -1,0 +1,11 @@
+Placeholders de screenshots (sem imagens). Use os arquivos visuais abaixo como referência.
+
+login.png
+
+dashboard.png
+tickets.png
+mytickets.png
+history.png
+admin.png
+demo.gif
+
